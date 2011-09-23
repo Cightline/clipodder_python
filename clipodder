@@ -91,10 +91,11 @@ class auto_podder():
 	self.curl = pycurl.Curl()
 	self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
  	self.curl.setopt(pycurl.MAXREDIRS, 5)
+	self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
     
     
     def download_file(self, name, path, url):
-	print "Downloading %s" % name
+	print "Downloading from %s %s" % (name, os.path.basename(path))
 	with open(path, "wb") as download_file:
 	    self.curl.setopt(pycurl.URL, str(url))
 	    self.curl.setopt(pycurl.WRITEDATA, download_file) 
@@ -103,7 +104,11 @@ class auto_podder():
     
     def get_link(self, data): #Might need to be fixed up more. 
 	
-	return data["links"][len(data["links"])-1]["href"]
+	for stuff in data["links"]:
+	    if "length" in stuff:
+		return stuff["href"]
+	
+	#return data["links"][len(data["links"])-1]["href"]
 	
     
     
@@ -116,9 +121,8 @@ class auto_podder():
 		file_url = self.get_link(entry)
 		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
-		
 		if self.validate(file_path) == False:
-		    self.download_file(file_name, file_path, file_url)
+		    self.download_file(p_title, file_path, file_url)
 		    
 		
 	
