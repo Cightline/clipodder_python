@@ -14,7 +14,7 @@ class auto_podder():
     
     def __init__(self):
 	self.config_dict = {}
-	self.config_dict["default_config_dir"] = os.path.expanduser("~/.auto_podder")
+	self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
 	self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
 	self.config = ConfigParser.RawConfigParser()
 	
@@ -26,7 +26,6 @@ class auto_podder():
     
     
     def load_conf(self):
-	print "Loading config"
 	self.config.readfp(open(self.config_dict["default_config"]))
 	self.config_dict["download_dir"] = self.config.get("options", "download_dir")
 	self.config_dict["max_downloads"] = self.config.getint("options", "max_downloads")
@@ -57,10 +56,10 @@ class auto_podder():
 	try:
 	    if os.path.isdir(self.config_dict["default_config_dir"]) == False:
 		os.mkdir(self.config_dict["default_config_dir"])
-		print "Created default config directory %s" % (self.config_dict["default_config_dir"])
+		print "Created default config directory (%s)" % (self.config_dict["default_config_dir"])
 		
 	except Exception, e:
-	    print "Error creating default config dir %s" % (self.config_dict["default_config_dir"])
+	    print "Error creating default config dir (%s)" % (self.config_dict["default_config_dir"])
 	    print "Reason: %s" % e
 	    exit(1)
 	    
@@ -68,7 +67,7 @@ class auto_podder():
 	for s in sections:
 	    self.config.add_section(s)
 	
-	self.config.set("options", "download_dir", os.path.expanduser("~/.auto_podder/downloads"))
+	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
 	self.config.set("urls", "url", "#url here")
 	
@@ -80,10 +79,9 @@ class auto_podder():
 		    print "Make sure you add some podcasts"
 	    
 	    except Exception, e:
-		print "Error creating default config"
+		print "Error creating default config (%s)" % self.config_dict["default_config"]
 		print "Reason: %s" % e
 		
-	print "Initilized"
 	exit()
     
     def init_curl(self):
@@ -118,8 +116,12 @@ class auto_podder():
     
     def deal_with_urls(self, urls):
 	for url in urls:
-	    print url
-	    if url[1]:
+	    
+	    if url[1] == "#url here":
+		print "Add some podcasts! (%s)" % self.config_dict["default_config"]
+		exit()
+		
+	    elif url[1]:
 		self.handle_parsed(feedparser.parse(url[1]))
 		break
 	    
