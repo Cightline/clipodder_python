@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python2
 
 #clipodder
 
@@ -98,6 +98,19 @@ class auto_podder():
 	    self.curl.perform()
 	    
     
+    def get_link(self, data):
+	links = data["links"]
+	
+	if links[0]:
+	    return links[0]["href"]
+	
+	if links[1]:
+	    return links[1]["href"]
+	
+	else:
+	    return links["href"]
+    
+    
     
     def handle_parsed(self, data):
 	p_title = data["feed"]["title"]
@@ -105,11 +118,12 @@ class auto_podder():
 	    
 	    for entry in data["entries"][0:self.config_dict["max_downloads"]]:
 		
-		file_name = os.path.basename(entry["links"][1]["href"])
+		file_url = self.get_link(entry)
+		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
 		
 		if self.validate(file_path) == False:
-		    self.download_file(file_name, file_path, entry["links"][1]["href"])
+		    self.download_file(file_name, file_path, file_url)
 		    
 		
 	
