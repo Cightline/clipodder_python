@@ -72,7 +72,7 @@ class auto_podder():
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
 	self.config.set("urls", "name_me_anything", "#url here")
-	self.config.set("urls", "anything_i_said", "#another url")
+	self.config.set("urls", "other_than_another_name", "#another url")
 	
 	if os.path.exists(self.config_dict["default_config"]) == False:
 	    try:
@@ -102,15 +102,16 @@ class auto_podder():
 	    self.curl.perform()
 	    
     
-    def get_link(self, data):
+    def get_link(self, data): #Might need to be fixed up more. 
 	links = data["links"]
-	
-	if links[0]:
-	    return links[0]["href"]
 	
 	if links[1]:
 	    return links[1]["href"]
 	
+	if links[0]:
+	    return links[0]["href"]
+	
+		
 	else:
 	    return links["href"]
     
