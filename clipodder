@@ -1,0 +1,129 @@
+#!/usr/bin/env python2
+
+#clipodder
+
+import os
+import urllib2
+import ConfigParser
+
+import pycurl
+import feedparser
+
+
+class auto_podder():
+    
+    def __init__(self):
+	self.config_dict = {}
+	self.config_dict["default_config_dir"] = os.path.expanduser("~/.auto_podder")
+	self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
+	self.config = ConfigParser.RawConfigParser()
+	
+	if self.validate():
+	    self.load_conf()
+	    self.init_curl()
+	    self.deal_with_urls(self.config.items("urls"))
+    
+    
+    
+    def load_conf(self):
+	print "Loading config"
+	self.config.readfp(open(self.config_dict["default_config"]))
+	self.config_dict["download_dir"] = self.config.get("options", "download_dir")
+	self.config_dict["max_downloads"] = self.config.getint("options", "max_downloads")
+	self.validate(self.config_dict["download_dir"], True)
+    
+    def validate(self, path=None, create=False):
+	if path:
+	    if os.path.exists(path):
+		return True
+		
+	    elif create:
+		os.mkdir(path)
+		return True
+		
+	    else:
+		return False
+		
+	if os.path.isdir(self.config_dict["default_config_dir"]) == False:
+	    self.init_auto_podder()
+	    
+	if os.path.exists(self.config_dict["default_config"]) == False:
+	    self.init_auto_podder()
+	    
+	return True
+    
+	    
+    def init_auto_podder(self):
+	try:
+	    if os.path.isdir(self.config_dict["default_config_dir"]) == False:
+		os.mkdir(self.config_dict["default_config_dir"])
+		print "Created default config directory %s" % (self.config_dict["default_config_dir"])
+		
+	except Exception, e:
+	    print "Error creating default config dir %s" % (self.config_dict["default_config_dir"])
+	    print "Reason: %s" % e
+	    exit(1)
+	    
+	sections = ["options", "urls"]
+	for s in sections:
+	    self.config.add_section(s)
+	
+	self.config.set("options", "download_dir", os.path.expanduser("~/.auto_podder/downloads"))
+	self.config.set("options", "max_downloads", "2")
+	self.config.set("urls", "url", "#url here")
+	
+	if os.path.exists(self.config_dict["default_config"]) == False:
+	    try:
+		with open(self.config_dict["default_config"], "w") as config_file:
+		    self.config.write(config_file)
+		    print "Wrote default config (%s)" % self.config_dict["default_config"]
+		    print "Make sure you add some podcasts"
+	    
+	    except Exception, e:
+		print "Error creating default config"
+		print "Reason: %s" % e
+		
+	print "Initilized"
+	exit()
+    
+    def init_curl(self):
+	self.curl = pycurl.Curl()
+	self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
+ 	self.curl.setopt(pycurl.MAXREDIRS, 5)
+    
+    
+    def download_file(self, name, path, url):
+	print "Downloading %s" % name
+	with open(path, "wb") as download_file:
+	    self.curl.setopt(pycurl.URL, str(url))
+	    self.curl.setopt(pycurl.WRITEDATA, download_file) 
+	    self.curl.perform()
+	    
+    
+    
+    def handle_parsed(self, data):
+	p_title = data["feed"]["title"]
+	if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
+	    
+	    for entry in data["entries"][0:self.config_dict["max_downloads"]]:
+		
+		file_name = os.path.basename(entry["links"][1]["href"])
+		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
+		
+		if self.validate(file_path) == False:
+		    self.download_file(file_name, file_path, entry["links"][1]["href"])
+		    
+		
+	
+    
+    def deal_with_urls(self, urls):
+	for url in urls:
+	    print url
+	    if url[1]:
+		self.handle_parsed(feedparser.parse(url[1]))
+		break
+	    
+	
+	
+	
+ap = auto_podder()

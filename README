@@ -1,0 +1,7 @@
+[description]
+	I wrote this to be a alternative to bashpodder, and gpo.
+	The config file is located at "~/.clipodder/config"
+	
+[deps]
+	python2
+	python-feedparser
