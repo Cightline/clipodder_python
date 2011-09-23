@@ -5,3 +5,4 @@
 [deps]
 	python2
 	python-feedparser
+	pycurl
