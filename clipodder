@@ -16,12 +16,14 @@ class auto_podder():
 	self.config_dict = {}
 	self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
 	self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
-	self.config = ConfigParser.RawConfigParser()
+	self.config = ConfigParser.ConfigParser()
 	
 	if self.validate():
 	    self.load_conf()
 	    self.init_curl()
-	    self.deal_with_urls(self.config.items("urls"))
+	    for item in self.config.items("urls"):
+		self.deal_with_url(item[1])
+	   
     
     
     
@@ -69,7 +71,8 @@ class auto_podder():
 	
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
-	self.config.set("urls", "url", "#url here")
+	self.config.set("urls", "name_me_anything", "#url here")
+	self.config.set("urls", "anything_i_said", "#another url")
 	
 	if os.path.exists(self.config_dict["default_config"]) == False:
 	    try:
@@ -81,7 +84,8 @@ class auto_podder():
 	    except Exception, e:
 		print "Error creating default config (%s)" % self.config_dict["default_config"]
 		print "Reason: %s" % e
-		
+	
+	print "Done"
 	exit()
     
     def init_curl(self):
@@ -116,7 +120,7 @@ class auto_podder():
 	p_title = data["feed"]["title"]
 	if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 	    
-	    for entry in data["entries"][0:self.config_dict["max_downloads"]]:
+	    for entry in data["entries"][0:self.config_dict["max_downloads"]+1]:
 		
 		file_url = self.get_link(entry)
 		file_name = os.path.basename(file_url)
@@ -128,16 +132,13 @@ class auto_podder():
 		
 	
     
-    def deal_with_urls(self, urls):
-	for url in urls:
-	    
-	    if url[1] == "#url here":
-		print "Add some podcasts! (%s)" % self.config_dict["default_config"]
-		exit()
+    def deal_with_url(self, url):
+	if url == "#url here":
+	    print "Add some podcasts! (%s)" % self.config_dict["default_config"]
+	    exit()
 		
-	    elif url[1]:
-		self.handle_parsed(feedparser.parse(url[1]))
-		break
+	elif url:
+	    self.handle_parsed(feedparser.parse(url))
 	    
 	
 	
