@@ -3,6 +3,6 @@
 	The config file is located at "~/.clipodder/config"
 	
 [deps]
-	python2
+	python2.7
 	python-feedparser
 	pycurl (python-pycurl)
