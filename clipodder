@@ -71,7 +71,6 @@ class auto_podder():
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
 	self.config.set("urls", "name_me_anything", "#url here")
-	self.config.set("urls", "name_me_anything", "#url here")
 	self.config.set("urls", "some_thing_unique", "#another url")
 	
 	if os.path.exists(self.config_dict["default_config"]) == False:
@@ -131,7 +130,7 @@ class auto_podder():
 	
     
     def deal_with_url(self, url):
-	if url == "name_me_anything":
+	if url == "#url here":
 	    print "Add some podcasts! (%s)" % self.config_dict["default_config"]
 	    exit()
 		
