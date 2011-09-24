@@ -71,7 +71,8 @@ class auto_podder():
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
 	self.config.set("urls", "name_me_anything", "#url here")
-	self.config.set("urls", "other_than_another_name", "#another url")
+	self.config.set("urls", "name_me_anything", "#url here")
+	self.config.set("urls", "some_thing_unique", "#another url")
 	
 	if os.path.exists(self.config_dict["default_config"]) == False:
 	    try:
@@ -95,7 +96,7 @@ class auto_podder():
     
     
     def download_file(self, name, path, url):
-	print "Downloading from %s %s" % (name, os.path.basename(path))
+	print "Downloading [%s] from %s" % (name, os.path.basename(path))
 	with open(path, "wb") as download_file:
 	    self.curl.setopt(pycurl.URL, str(url))
 	    self.curl.setopt(pycurl.WRITEDATA, download_file) 
@@ -108,19 +109,21 @@ class auto_podder():
 	    if "length" in stuff:
 		return stuff["href"]
 	
-	#return data["links"][len(data["links"])-1]["href"]
-	
     
     
     def handle_parsed(self, data):
 	p_title = data["feed"]["title"]
+	
+	print "Checking %s" % p_title
+	
 	if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 	    
-	    for entry in data["entries"][0:self.config_dict["max_downloads"]+1]:
+	    for entry in data["entries"][0:self.config_dict["max_downloads"]]:
 		
 		file_url = self.get_link(entry)
 		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
+		
 		if self.validate(file_path) == False:
 		    self.download_file(p_title, file_path, file_url)
 		    
@@ -128,7 +131,7 @@ class auto_podder():
 	
     
     def deal_with_url(self, url):
-	if url == "#url here":
+	if url == "name_me_anything":
 	    print "Add some podcasts! (%s)" % self.config_dict["default_config"]
 	    exit()
 		
