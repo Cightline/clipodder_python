@@ -106,11 +106,17 @@ class auto_podder():
     def get_link(self, data): #Might need to be fixed up more. 
 	
 	for stuff in data["links"]:
+	    type_f = stuff["type"].split("/")[0]
+	    
 	    if "length" in stuff:
 		return stuff["href"]
+		
+	    elif type_f == "video" or type_f == "audio":
+		return stuff["href"]
+	    
 	
+	return False
 	
-    
     
     def handle_parsed(self, data):
 	p_title = data["feed"]["title"]
@@ -121,11 +127,15 @@ class auto_podder():
 	    
 	    for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
 		
-		try:
-		    file_url = self.get_link(entry)
-		except:
-		    print "Could not grab the link from %s" % p_title
+		
+		file_url = self.get_link(entry)
+		
+		if file_url == False:
+		    print "Could not grab the link from %s, skipping" % p_title
+		    continue
 		    
+		
+		print file_url
 		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
 		
