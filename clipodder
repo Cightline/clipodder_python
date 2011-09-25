@@ -135,7 +135,6 @@ class auto_podder():
 		    continue
 		    
 		
-		print file_url
 		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
 		
