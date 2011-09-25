@@ -96,7 +96,7 @@ class auto_podder():
     
     
     def download_file(self, name, path, url):
-	print "Downloading [%s] from %s" % (name, os.path.basename(path))
+	print "Downloading [%s] from %s" % (os.path.basename(path), name)
 	with open(path, "wb") as download_file:
 	    self.curl.setopt(pycurl.URL, str(url))
 	    self.curl.setopt(pycurl.WRITEDATA, download_file) 
