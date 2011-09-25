@@ -70,6 +70,7 @@ class auto_podder():
 	
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 	self.config.set("options", "max_downloads", "2")
+	self.config.set("options", "#The name of the url (not the url itself) needs to be something unique, ie a number", "")
 	self.config.set("urls", "name_me_anything", "#url here")
 	self.config.set("urls", "some_thing_unique", "#another url")
 	
