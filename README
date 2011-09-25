@@ -1,8 +1,29 @@
 [description]
 	I wrote this to be a alternative to bashpodder, and gpo.
-	The config file is located at "~/.clipodder/config"
+	Bashpodder downloads too much "crap" along with the podcast. 
+	Gpo (from gpodder) has too many deps, and unlike clipodder uses a sql database.
+	
 	
 [deps]
 	python2
 	python-feedparser
 	pycurl (python-pycurl)
+
+[notes]
+	The config file is located at "~/.clipodder/config"
+	clipodder's downloads are based of the files themselves, 
+	so don't delete/rename any of them (until it has downloaded 
+	the num of max_downloads for that podcast). Example
+	if max_downloads is set to 2, it will download the 
+	first 2 podcasts from that feed. Eventually you will 
+	have 3, 4, 5 videos. If you have 5 downloaded you can 
+	delete the first 3, and be good to go. 
+
+	Urls need to be named in this type of fashon:
+	1 = http://someurl.org/feed
+	2 = http://someurl.org/feed
+	something = http://someurl.org/feed
+	unique = http://someurl.org/feed
+
+	(It just needs to be unique or ConfigParser will 
+	not pick up on it)
