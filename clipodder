@@ -29,7 +29,7 @@ class auto_podder():
     def load_conf(self):
 	self.config.readfp(open(self.config_dict["default_config"]))
 	self.config_dict["download_dir"] = self.config.get("options", "download_dir")
-	self.config_dict["max_downloads"] = self.config.getint("options", "max_downloads")
+	self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
 	self.validate(self.config_dict["download_dir"], True)
     
     def validate(self, path=None, create=False):
@@ -69,10 +69,10 @@ class auto_podder():
 	    self.config.add_section(s)
 	
 	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
-	self.config.set("options", "max_downloads", "2")
+	self.config.set("options", "downloads_per_url", "2")
 	self.config.set("options", "#The name of the url (not the url itself) needs to be something unique, ie a number", "")
-	self.config.set("urls", "name_me_anything", "#url here")
-	self.config.set("urls", "some_thing_unique", "#another url")
+	self.config.set("urls", "1", "#url here")
+	self.config.set("urls", "2", "#another url")
 	
 	if os.path.exists(self.config_dict["default_config"]) == False:
 	    try:
@@ -109,6 +109,7 @@ class auto_podder():
 	    if "length" in stuff:
 		return stuff["href"]
 	
+	
     
     
     def handle_parsed(self, data):
@@ -118,9 +119,13 @@ class auto_podder():
 	
 	if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 	    
-	    for entry in data["entries"][0:self.config_dict["max_downloads"]]:
+	    for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
 		
-		file_url = self.get_link(entry)
+		try:
+		    file_url = self.get_link(entry)
+		except:
+		    print "Could not grab the link from %s" % p_title
+		    
 		file_name = os.path.basename(file_url)
 		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
 		
