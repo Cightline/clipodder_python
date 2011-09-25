@@ -13,10 +13,10 @@
 	The config file is located at "~/.clipodder/config"
 	clipodder's downloads are based of the files themselves, 
 	so don't delete/rename any of them (until it has downloaded 
-	the num of downloads_per_podcast for that podcast). 
+	the num of downloads_per_url for that podcast). 
 	
 	Example
-	If downloads_per_podcast is set to 2, it will download the 
+	If downloads_per_url is set to 2, it will download the 
 	first 2 podcasts from that feed. Eventually you will 
 	have 3, 4, 5 videos. If you have 5 downloaded you can 
 	delete the first 3, and be good to go. 
