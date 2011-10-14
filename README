@@ -1,7 +1,8 @@
 [description]
-	I wrote this to be a alternative to bashpodder, and gpo.
-	Bashpodder downloads too much "crap" along with the podcast. 
-	Gpo (from gpodder) has too many deps, and unlike clipodder uses a sql database.
+	I wrote clipodder to be a alternative to bashpodder, and gpo.
+	Bashpodder tends to download too much extra "stuff" along with the podcast
+	which is quite annoying. Gpo (from gpodder) has too many deps, 
+	and uses a sql database backend.
 	
 	
 [deps]
@@ -10,22 +11,28 @@
 	pycurl (python-pycurl)
 
 [notes]
-	The config file is located at "~/.clipodder/config"
-	clipodder's downloads are based of the files themselves, 
-	so don't delete/rename any of them (until it has downloaded 
-	the num of downloads_per_url for that podcast). 
+	The config will be initially created the first time you run
+	clipodder. The config file is located at "~/.clipodder/config".
+	Clipodder's downloads are based of the files themselves, 
+	so don't delete/rename any of them (until it has exceeded 
+	the number of downloads_per_url for that podcast). 
 	
 	Example
 	If downloads_per_url is set to 2, it will download the 
 	first 2 podcasts from that feed. Eventually you will 
-	have 3, 4, 5 videos. If you have 5 downloaded you can 
-	delete the first 3, and be good to go. 
+	have 3, 4, 5, etc... videos. If you have 5 downloaded you can 
+	delete the oldest 3, and be good to go. 
 
 	Urls need to be named in this type of fashon:
-	1 = http://someurl.org/feed
+	
+	1 = http://someurl.org/feed.
 	2 = http://someurl.org/feed
-	something = http://someurl.org/feed
-	unique = http://someurl.org/feed
-
+	foo = http://someurl.org/feed.xml <-- dot xml is ok
+	bar = http://someurl.org/feed
+	
 	(It just needs to be unique or ConfigParser will 
 	not pick up on it)
+
+
+	Its best to add this to crontab, maybe sometime early in 
+	the morning before you wake up.
