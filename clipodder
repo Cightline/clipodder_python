@@ -1,21 +1,21 @@
 #!/usr/bin/env python2
 
-#    Clipodder, a small "cronable" utility to download video/audio podcasts
-#    
-#    Copyright (C) 2011  Afterburn
+#	Clipodder, a small "cron-able" utility to download video/audio podcasts
+#	
+#	Copyright (C) 2011  Afterburn
 #
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
+#	This program is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	(at your option) any later version.
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.  
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <http://www.gnu.org/licenses/>.  
 
 import os
 import urllib2
@@ -26,148 +26,148 @@ import feedparser
 
 
 class auto_podder():
-    
-    def __init__(self):
-	self.config_dict = {}
-	self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
-	self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
-	self.config = ConfigParser.ConfigParser()
 	
-	if self.validate():
-	    self.load_conf()
-	    self.init_curl()
-	    for item in self.config.items("urls"):
-		self.deal_with_url(item[1])
+	def __init__(self):
+		self.config_dict = {}
+		self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
+		self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
+		self.config = ConfigParser.ConfigParser()
 	
-    
-    
-    def load_conf(self):
-	self.config.readfp(open(self.config_dict["default_config"]))
-	self.config_dict["download_dir"] = self.config.get("options", "download_dir")
-	self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
-	self.validate(self.config_dict["download_dir"], True)
-    
-    def validate(self, path=None, create=False):
-	if path:
-	    if os.path.exists(path):
-		return True
+		if self.validate():
+			self.load_conf()
+			self.init_curl()
+			for item in self.config.items("urls"):
+				self.deal_with_url(item[1])
+	
+	
+	
+	def load_conf(self):
+		self.config.readfp(open(self.config_dict["default_config"]))
+		self.config_dict["download_dir"] = self.config.get("options", "download_dir")
+		self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
+		self.validate(self.config_dict["download_dir"], True)
+	
+	def validate(self, path=None, create=False):
+		if path:
+			if os.path.exists(path):
+				return True
 		
-	    elif create:
-		os.mkdir(path)
-		return True
+			elif create:
+				os.mkdir(path)
+				return True
+				
+			else:
+				return False
 		
-	    else:
+		if os.path.isdir(self.config_dict["default_config_dir"]) == False:
+			self.init_auto_podder()
+		
+		if os.path.exists(self.config_dict["default_config"]) == False:
+			self.init_auto_podder()
+		
+		return True
+	
+		
+	def init_auto_podder(self):
+		try:
+			if os.path.isdir(self.config_dict["default_config_dir"]) == False:
+				os.mkdir(self.config_dict["default_config_dir"])
+				print "Created default config directory (%s)" % (self.config_dict["default_config_dir"])
+		
+		except Exception, e:
+			print "Error creating default config dir (%s)" % (self.config_dict["default_config_dir"])
+			print "Reason: %s" % e
+			exit(1)
+		
+		sections = ["options", "urls"]
+		
+		for s in sections:
+			self.config.add_section(s)
+	
+		self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
+		self.config.set("options", "downloads_per_url", "2")
+		self.config.set("options", "#The name of the url (not the url itself) needs to be something unique, ie a number", "")
+		self.config.set("urls", "1", "#url here")
+		self.config.set("urls", "2", "#another url")
+	
+		if os.path.exists(self.config_dict["default_config"]) == False:
+			try:
+				with open(self.config_dict["default_config"], "w") as config_file:
+					self.config.write(config_file)
+					print "Wrote default config (%s)" % self.config_dict["default_config"]
+					print "Make sure you add some podcasts"
+		
+			except Exception, e:
+				print "Error creating default config (%s)" % self.config_dict["default_config"]
+				print "Reason: %s" % e
+	
+		print "Done"
+		exit()
+	
+	def init_curl(self):
+		self.curl = pycurl.Curl()
+		self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
+		self.curl.setopt(pycurl.MAXREDIRS, 5)
+		self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
+	
+	
+	def download_file(self, name, path, url):
+		print "Downloading [%s] from %s" % (os.path.basename(path), name)
+		
+		with open(path, "wb") as download_file:
+			self.curl.setopt(pycurl.URL, str(url))
+			self.curl.setopt(pycurl.WRITEDATA, download_file) 
+			self.curl.perform()
+		
+	
+	def get_link(self, data): #Might need to be fixed up more. 
+	
+		for stuff in data["links"]:
+			type_f = stuff["type"].split("/")[0]
+		
+		if "length" in stuff:
+			return stuff["href"]
+		
+		elif type_f == "video" or type_f == "audio":
+			return stuff["href"]
+		
+	
 		return False
-		
-	if os.path.isdir(self.config_dict["default_config_dir"]) == False:
-	    self.init_auto_podder()
-	    
-	if os.path.exists(self.config_dict["default_config"]) == False:
-	    self.init_auto_podder()
-	    
-	return True
-    
-	    
-    def init_auto_podder(self):
-	try:
-	    if os.path.isdir(self.config_dict["default_config_dir"]) == False:
-		os.mkdir(self.config_dict["default_config_dir"])
-		print "Created default config directory (%s)" % (self.config_dict["default_config_dir"])
-		
-	except Exception, e:
-	    print "Error creating default config dir (%s)" % (self.config_dict["default_config_dir"])
-	    print "Reason: %s" % e
-	    exit(1)
-	    
-	sections = ["options", "urls"]
-	for s in sections:
-	    self.config.add_section(s)
 	
-	self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
-	self.config.set("options", "downloads_per_url", "2")
-	self.config.set("options", "#The name of the url (not the url itself) needs to be something unique, ie a number", "")
-	self.config.set("urls", "1", "#url here")
-	self.config.set("urls", "2", "#another url")
 	
-	if os.path.exists(self.config_dict["default_config"]) == False:
-	    try:
-		with open(self.config_dict["default_config"], "w") as config_file:
-		    self.config.write(config_file)
-		    print "Wrote default config (%s)" % self.config_dict["default_config"]
-		    print "Make sure you add some podcasts"
-	    
-	    except Exception, e:
-		print "Error creating default config (%s)" % self.config_dict["default_config"]
-		print "Reason: %s" % e
+	def handle_parsed(self, data):
+		p_title = data["feed"]["title"]
 	
-	print "Done"
-	exit()
-    
-    def init_curl(self):
-	self.curl = pycurl.Curl()
-	self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
- 	self.curl.setopt(pycurl.MAXREDIRS, 5)
-	self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
-    
-    
-    def download_file(self, name, path, url):
-	print "Downloading [%s] from %s" % (os.path.basename(path), name)
-	with open(path, "wb") as download_file:
-	    self.curl.setopt(pycurl.URL, str(url))
-	    self.curl.setopt(pycurl.WRITEDATA, download_file) 
-	    self.curl.perform()
-	    
-    
-    def get_link(self, data): #Might need to be fixed up more. 
+		print "Checking %s" % p_title
 	
-	for stuff in data["links"]:
-	    type_f = stuff["type"].split("/")[0]
-	    
-	    if "length" in stuff:
-		return stuff["href"]
+		if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
+			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
+				
+				file_url = self.get_link(entry)
+				
+				if file_url == False:
+					print "Could not grab the link from %s, skipping" % p_title
+					continue
+			
 		
-	    elif type_f == "video" or type_f == "audio":
-		return stuff["href"]
-	    
-	
-	return False
-	
-    
-    def handle_parsed(self, data):
-	p_title = data["feed"]["title"]
-	
-	print "Checking %s" % p_title
-	
-	if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
-	    
-	    for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
+				file_name = os.path.basename(file_url)
+				file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
 		
-		
-		file_url = self.get_link(entry)
-		
-		if file_url == False:
-		    print "Could not grab the link from %s, skipping" % p_title
-		    continue
-		    
-		
-		file_name = os.path.basename(file_url)
-		file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
-		
-		if self.validate(file_path) == False:
-		    self.download_file(p_title, file_path, file_url)
-		    
+				if self.validate(file_path) == False:
+					self.download_file(p_title, file_path, file_url)
+			
 		
 	
-    
-    def deal_with_url(self, url):
-	if url == "#url here":
-	    print "Add some podcasts! (%s)" % self.config_dict["default_config"]
-	    exit()
+	
+	def deal_with_url(self, url):
+		if url == "#url here":
+			print "Add some podcasts! (%s)" % self.config_dict["default_config"]
+			exit()
 		
-	elif url:
-	    self.handle_parsed(feedparser.parse(url))
-	    
+		elif url:
+			self.handle_parsed(feedparser.parse(url))
+		
 	
 	
 	
-ap = auto_podder()
+clipodder = auto_podder()
