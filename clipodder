@@ -121,22 +121,33 @@ class auto_podder():
 		
 	
 	def get_link(self, data): #Might need to be fixed up more. 
-	
+		#Iterate through the given data and return the first media file matched
 		for stuff in data["links"]:
-			type_f = stuff["type"].split("/")[0]
+			print data["links"]
+			if "type" in stuff:
+				try:
+					type_f = stuff["type"].split("/")[0]
+				except:
+					type_f = False
 		
-		if "length" in stuff:
-			return stuff["href"]
+			if "length" in stuff:
+				return stuff["href"]
 		
-		elif type_f == "video" or type_f == "audio":
-			return stuff["href"]
+			elif type_f == "video" or type_f == "audio":
+				return stuff["href"]
 		
 	
 		return False
 	
 	
-	def handle_parsed(self, data):
-		p_title = data["feed"]["title"]
+	def handle_parsed(self, data, url):
+		
+		if "title" in data["feed"]:
+			p_title = data["feed"]["title"]
+	
+		else:
+			print url
+			p_title = os.path.basename(url)
 	
 		print "Checking %s" % p_title
 	
@@ -165,7 +176,7 @@ class auto_podder():
 			exit()
 		
 		elif url:
-			self.handle_parsed(feedparser.parse(url))
+			self.handle_parsed(feedparser.parse(url), url)
 		
 	
 	
