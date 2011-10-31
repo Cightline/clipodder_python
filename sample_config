@@ -1,0 +1,12 @@
+[options]
+download_dir = /home/stealth/.clipodder/downloads
+downloads_per_url = 2
+#the name of the url (not the url itself) needs to be something unique, ie a number = 
+
+[urls]
+#1 = http://revision3.com/diggnation/feed/quicktime-high-definition/
+#2 = http://feeds.twit.tv/sn_video_large
+2 = http://nana-life.com/nana-life.xml audio
+3 = http://revision3.com/hak5/feed/MP4-High-Definition video
+4 = http://feeds.feedburner.com/tedtalksHD 
+
