@@ -23,11 +23,12 @@
 	have 3, 4, 5, etc... videos. If you have 5 downloaded you can 
 	delete the oldest 3, and be good to go. 
 
-	Urls need to be named in this type of fashon:
 
-	NEW: you can now download other media types aswell. 
+	[NEW] You can now download other media types aswell. 
 	Simply add "pdf", "html", etc... to the end of the url
 	
+	Urls need to be named in this type of fashon:
+
 	1 = http://someurl.org/feed pdf html 
 	2 = http://someurl.org/feed audio video
 	foo = http://someurl.org/feed.xml <-- dot xml is ok
