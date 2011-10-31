@@ -6,7 +6,7 @@ downloads_per_url = 2
 [urls]
 #1 = http://revision3.com/diggnation/feed/quicktime-high-definition/
 #2 = http://feeds.twit.tv/sn_video_large
-2 = http://nana-life.com/nana-life.xml audio
+2 = http://nana-life.com/nana-life.xml audio html
 3 = http://revision3.com/hak5/feed/MP4-High-Definition video
 4 = http://feeds.feedburner.com/tedtalksHD 
 
