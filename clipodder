@@ -20,6 +20,7 @@
 import os
 import urllib2
 import ConfigParser
+import json
 
 import pycurl
 import feedparser
@@ -37,8 +38,11 @@ class auto_podder():
 			self.load_conf()
 			self.init_curl()
 			for item in self.config.items("urls"):
-				self.deal_with_url(item[1])
-	
+				#Split it up, so we can specify more arguments. 
+				feed_args = str(item[1]).split(" ")
+				feed_url = feed_args[0]
+				
+				self.deal_with_url(feed_url, feed_args)
 	
 	
 	def load_conf(self):
@@ -120,33 +124,51 @@ class auto_podder():
 			self.curl.perform()
 		
 	
-	def get_link(self, data): #Might need to be fixed up more. 
-		#Iterate through the given data and return the first media file matched
+	def get_link(self, data, args): #Might need to be fixed up more. 
+		
+		#If nothing is specified, try download video and audio
+		if args[1:] == []:
+			args.extend(["video", "audio"])
+			
+		links = {"video":None, "audio":None}
+		extra_args = []
+		
+		for arg in args[1:]:
+			if arg != "video" and arg != "audio":
+				extra_args.append(arg)
+		
+		
 		for stuff in data["links"]:
-
+			
 			if "type" in stuff:
 				try:
 					type_f = stuff["type"].split("/")[0]
 				except:
 					type_f = False
+					
+				if type_f in args[1:]:
+					links[type_f] = stuff["href"]
+			
+				#Find the extension
+				try:
+					extra_type = stuff["href"].split(".")[-1]
+				except:
+					continue
+						
+				if extra_type in extra_args:
+					print "Extra type found %s %s" % (extra_type, stuff["href"])
+					links[extra_type] = stuff["href"]
 		
-			if "length" in stuff:
-				return stuff["href"]
-		
-			elif type_f == "video" or type_f == "audio":
-				return stuff["href"]
-		
-	
-		return False
+		#Return extra_args too, so handle_parsed can see if there is anything to download
+		return links, extra_args
 	
 	
-	def handle_parsed(self, data, url):
+	def handle_parsed(self, data, url, args):
 		
 		if "title" in data["feed"]:
 			p_title = data["feed"]["title"]
 	
 		else:
-
 			p_title = os.path.basename(url)
 	
 		print "Checking %s" % p_title
@@ -154,29 +176,34 @@ class auto_podder():
 		if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
 				
-				file_url = self.get_link(entry)
+				url_dict, extra_args = self.get_link(entry, args)
 				
-				if file_url == False:
+				#Check to see if anything needs to be downloaded 
+				if url_dict["video"] == None and url_dict["audio"] == None and extra_args == []:
 					print "Could not grab the link from %s, skipping" % p_title
 					continue
 			
-		
-				file_name = os.path.basename(file_url)
-				file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
-		
-				if self.validate(file_path) == False:
-					self.download_file(p_title, file_path, file_url)
+				for media_type in url_dict:
+					if url_dict[media_type] == None:
+						continue
+						
+					file_name = os.path.basename(url_dict[media_type])
+					file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
+					
+					#Check to see if the file exists, if not, download
+					if self.validate(file_path) == False:
+						self.download_file(p_title, file_path, url_dict[media_type])
 			
 		
 	
 	
-	def deal_with_url(self, url):
+	def deal_with_url(self, url, args):
 		if url == "#url here":
 			print "Add some podcasts! (%s)" % self.config_dict["default_config"]
 			exit()
 		
 		elif url:
-			self.handle_parsed(feedparser.parse(url), url)
+			self.handle_parsed(feedparser.parse(url), url, args)
 		
 	
 	
