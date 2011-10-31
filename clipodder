@@ -130,6 +130,8 @@ class auto_podder():
 		if args[1:] == []:
 			args.extend(["video", "audio"])
 			
+				
+			
 		links = {"video":None, "audio":None}
 		extra_args = []
 		

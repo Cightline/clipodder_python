@@ -31,7 +31,7 @@
 	1 = http://someurl.org/feed pdf html 
 	2 = http://someurl.org/feed audio video
 	foo = http://someurl.org/feed.xml <-- dot xml is ok
-	bar = http://someurl.org/feed audio
+	bar = http://someurl.org/feed audio <-- only audio
 	
 	(It just needs to be unique or ConfigParser will 
 	not pick up on it)
@@ -39,5 +39,3 @@
 
 	Its best to add this to crontab, maybe sometime early in 
 	the morning before you wake up.
-[todo]
-	Make it ONLY download video/audio/etc.., if thats the only arg specified
