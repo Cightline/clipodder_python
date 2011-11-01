@@ -116,7 +116,7 @@ class auto_podder():
 	
 	
 	def download_file(self, name, path, url):
-		print "Downloading [%s] from %s" % (os.path.basename(path), name)
+		print("Downloading [%s]" % os.path.basename(path))
 		
 		with open(path, "wb") as download_file:
 			self.curl.setopt(pycurl.URL, str(url))
@@ -124,81 +124,102 @@ class auto_podder():
 			self.curl.perform()
 		
 	
-	def get_link(self, data, args): #Might need to be fixed up more. 
-		
-		#If nothing is specified, try download video and audio
-		if args[1:] == []:
-			args.extend(["video", "audio"])
-			
-				
-			
-		links = {"video":None, "audio":None}
-		extra_args = []
-		
-		for arg in args[1:]:
-			if arg != "video" and arg != "audio":
-				extra_args.append(arg)
-		
-		
+	def get_link(self, data, download_types):
+		"""
+		This gets the downloadable links from an entry in an RSS feed.
+		- data is a list of entries for a feed parsed with feedparser
+		(i.e. feedparser.parse(url)["entries"][0:10]).
+		- download_types is a list of filetypes to download.  "audio"
+		and "video" are treated as MIME types, while any other string
+		is just treated as a file extension.
+
+		This function returns a list of urls to be downloaded.
+		"""
+		# the list of links we return from this function
+		links = []
+
+		# These files will be downloaded based on mime type.
+		# For now, this is only "video" or "audio".
+		mime_types = []
+		# These files will be downloaded based on file extension.
+		# For example, this could be "pdf" or "html".
+		file_types = []
+
+		# (these probably need to be expanded...)
+		video_extensions = ["avi", "flv", "mov", "mp4"]
+		audio_extensions = ["mp3", "ogg", "wav", "m4a"]
+
+		if download_types == []:
+			mime_types = ["video", "audio"]
+		else:
+			for dtype in download_types:
+				if dtype == "video":
+					mime_types.append("video")
+					file_types.extend(video_extensions)
+				elif dtype == "audio":
+					mime_types.append("audio")
+					file_types.extend(audio_extensions)
+				else:
+					file_types.append(dtype)
+
 		for stuff in data["links"]:
-			
-			if "type" in stuff:
-				try:
-					type_f = stuff["type"].split("/")[0]
-				except:
-					type_f = False
-					
-				if type_f in args[1:]:
-					links[type_f] = stuff["href"]
-			
-				#Find the extension
-				try:
-					extra_type = stuff["href"].split(".")[-1]
-				except:
-					continue
-						
-				if extra_type in extra_args:
-					print "Extra type found %s %s" % (extra_type, stuff["href"])
-					links[extra_type] = stuff["href"]
-		
-		#Return extra_args too, so handle_parsed can see if there is anything to download
-		return links, extra_args
-	
-	
+
+			# get the mime type
+			try:
+				type_f = stuff["type"].split("/")[0]
+			except:
+				type_f = None
+
+			# get the file extension
+			try:
+				extension = stuff["href"].split(".")[-1]
+			except:
+				extension = None
+
+			# add it if the mime type matches, or the extension matches
+			if type_f in mime_types or extension in file_types:
+				links.append(stuff["href"])
+
+		return links
+
+
 	def handle_parsed(self, data, url, args):
-		
+
 		if "title" in data["feed"]:
 			p_title = data["feed"]["title"]
-	
+
 		else:
 			p_title = os.path.basename(url)
-	
+
 		print "Checking %s" % p_title
-	
+
 		if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
-				
-				url_dict, extra_args = self.get_link(entry, args)
-				
-				#Check to see if anything needs to be downloaded 
-				if url_dict["video"] == None and url_dict["audio"] == None and extra_args == []:
-					print "Could not grab the link from %s, skipping" % p_title
+
+				urls = self.get_link(entry, args[1:])
+
+				#Check to see if anything needs to be downloaded
+				if not urls:
+					print("Skipping %s" % [stuff["href"] for stuff in entry["links"]])
 					continue
-			
-				for media_type in url_dict:
-					if url_dict[media_type] == None:
+
+				for url in urls:
+					# this should never happen?
+					if not url:
+						print("ERROR! url not valid from %s" % p_title)
+						exit(1)
 						continue
-						
-					file_name = os.path.basename(url_dict[media_type])
+
+					file_name = os.path.basename(url)
 					file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
-					
+
 					#Check to see if the file exists, if not, download
 					if self.validate(file_path) == False:
-						self.download_file(p_title, file_path, url_dict[media_type])
-			
-		
-	
-	
+						self.download_file(p_title, file_path, url)
+
+
+
+
 	def deal_with_url(self, url, args):
 		if url == "#url here":
 			print "Add some podcasts! (%s)" % self.config_dict["default_config"]
