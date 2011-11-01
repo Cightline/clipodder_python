@@ -200,7 +200,7 @@ class auto_podder():
 
 				#Check to see if anything needs to be downloaded
 				if not urls:
-					print "Could not grab the link from %s, skipping" % p_title
+					print("Skipping %s" % [stuff["href"] for stuff in entry["links"]])
 					continue
 
 				for url in urls:
