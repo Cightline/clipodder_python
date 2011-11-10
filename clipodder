@@ -178,7 +178,16 @@ class auto_podder():
 
 			# add it if the mime type matches, or the extension matches
 			if type_f in mime_types or extension in file_types:
-				links.append(stuff["href"])
+				
+				if len(extension) > 3:
+					to_find = stuff["href"].split(".")[-1][0:3]
+					true_url = stuff["href"][0:stuff["href"].find(to_find)+len(to_find)]
+					links.append(true_url)
+					
+				else:
+					links.append(stuff["href"])
+				
+			
 
 		return links
 
@@ -197,17 +206,16 @@ class auto_podder():
 			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
 
 				urls = self.get_link(entry, args[1:])
-
+				
 				#Check to see if anything needs to be downloaded
 				if not urls:
-					print("Skipping %s" % [stuff["href"] for stuff in entry["links"]])
+					print("Skipping %s, nothing found..." % [stuff["href"] for stuff in entry["links"]])
 					continue
 
 				for url in urls:
 					# this should never happen?
 					if not url:
 						print("ERROR! url not valid from %s" % p_title)
-						exit(1)
 						continue
 
 					file_name = os.path.basename(url)
