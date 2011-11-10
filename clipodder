@@ -172,20 +172,17 @@ class auto_podder():
 
 			# get the file extension
 			try:
+				#strip extra stuff that is not needed from the url
 				extension = stuff["href"].split(".")[-1]
+				if len(extension) > 3:
+					extension = stuff["href"].split(".")[-1][0:3]
+					stuff["href"] = stuff["href"][0:stuff["href"].find(extension)+len(extension)]
 			except:
 				extension = None
 
 			# add it if the mime type matches, or the extension matches
 			if type_f in mime_types or extension in file_types:
-				
-				if len(extension) > 3:
-					to_find = stuff["href"].split(".")[-1][0:3]
-					true_url = stuff["href"][0:stuff["href"].find(to_find)+len(to_find)]
-					links.append(true_url)
-					
-				else:
-					links.append(stuff["href"])
+				links.append(stuff["href"])
 				
 			
 
