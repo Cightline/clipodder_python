@@ -18,6 +18,7 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.  
 
 import os
+import sys
 import urllib2
 import ConfigParser
 import json
@@ -50,6 +51,9 @@ class auto_podder():
 		self.config_dict["download_dir"] = self.config.get("options", "download_dir")
 		self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
 		self.config_dict["use_colors"] = self.config.getboolean("options", "use_colors")
+		# don't use colors if we are not printing to the console
+		if not sys.stdout.isatty():
+			self.config_dict["use_colors"] = False
 		self.validate(self.config_dict["download_dir"], True)
 	
 	def validate(self, path=None, create=False):
