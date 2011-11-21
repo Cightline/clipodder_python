@@ -1,6 +1,7 @@
 [options]
 download_dir = /home/stealth/.clipodder/downloads
 downloads_per_url = 2
+use_colors = false
 #the name of the url (not the url itself) needs to be something unique, ie a number = 
 
 [urls]
