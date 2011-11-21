@@ -18,6 +18,7 @@
 #	along with this program.  If not, see <http://www.gnu.org/licenses/>.  
 
 import os
+import sys
 import urllib2
 import ConfigParser
 import json
@@ -49,6 +50,10 @@ class auto_podder():
 		self.config.readfp(open(self.config_dict["default_config"]))
 		self.config_dict["download_dir"] = self.config.get("options", "download_dir")
 		self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
+		self.config_dict["use_colors"] = self.config.getboolean("options", "use_colors")
+		# don't use colors if we are not printing to the console
+		if not sys.stdout.isatty():
+			self.config_dict["use_colors"] = False
 		self.validate(self.config_dict["download_dir"], True)
 	
 	def validate(self, path=None, create=False):
@@ -90,6 +95,7 @@ class auto_podder():
 	
 		self.config.set("options", "download_dir", os.path.expanduser("%s/%s" % (self.config_dict["default_config_dir"], "downloads")))
 		self.config.set("options", "downloads_per_url", "2")
+		self.config.set("options", "use_colors", "false")
 		self.config.set("options", "#The name of the url (not the url itself) needs to be something unique, ie a number", "")
 		self.config.set("urls", "1", "#url here")
 		self.config.set("urls", "2", "#another url")
@@ -107,7 +113,59 @@ class auto_podder():
 	
 		print "Done"
 		exit()
-	
+
+	def color(self, string, fg=None, bg=None, bold=True):
+		if not self.config_dict["use_colors"] or (not fg and not bg and not bold):
+			return string
+
+		color_list = [None, "black", "red", "green", "yellow", "blue",
+				"magenta", "cyan", "white"]
+
+		if fg not in color_list:
+			raise Exception("color passed in %s is not one of %s" % (fg, color_list))
+		if bg not in color_list:
+			raise Exception("color passed in %s is not one of %s" % (bg, color_list))
+
+		escape = "\033["
+
+		# foreground (text) colors
+		fg_colors = {
+				"black":'30;',
+				"red":'31;',
+				"green": '32;',
+				"yellow": '33;',
+				"blue": '34;',
+				"magenta": '35;',
+				"cyan": '36;',
+				"white": '37;',
+				None: '',           # This corresponds to no foreground color
+				True: '01;',         # This corresponds to bold foreground
+				False: '',          # This corresponds to not bold foreground
+				}
+
+		# background colors
+		bg_colors = {
+				"black":'40;',
+				"red":'41;',
+				"green": '42;',
+				"yellow": '43;',
+				"blue": '44;',
+				"magenta": '45;',
+				"cyan": '46;',
+				"white": '47;',
+				None: '',           # This corresponds to no background color
+				}
+
+		# normal text
+		reset_seq = '%s00m' % escape
+
+		color_escape_seq = "%s%s%s%s"%(escape, fg_colors[fg], bg_colors[bg], fg_colors[bold])
+		# There will be a leftover ';' at the end.  We need to get rid of this.
+		color_escape_seq = color_escape_seq.rstrip(';')
+
+		return "%sm%s%s" % (color_escape_seq, string, reset_seq)
+
+
 	def init_curl(self):
 		self.curl = pycurl.Curl()
 		self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
@@ -116,7 +174,7 @@ class auto_podder():
 	
 	
 	def download_file(self, name, path, url):
-		print("Downloading [%s]" % os.path.basename(path))
+		print("%s [%s]" % (self.color("Downloading", fg="green"), os.path.basename(path)))
 		
 		with open(path, "wb") as download_file:
 			self.curl.setopt(pycurl.URL, str(url))
@@ -197,7 +255,7 @@ class auto_podder():
 		else:
 			p_title = os.path.basename(url)
 
-		print "Checking %s" % p_title
+		print "Checking %s" % p_title.encode('utf8')
 
 		if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
 			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
@@ -206,7 +264,7 @@ class auto_podder():
 				
 				#Check to see if anything needs to be downloaded
 				if not urls:
-					print("Skipping %s, nothing found..." % [stuff["href"] for stuff in entry["links"]])
+					print("%s %s, nothing found..." % (self.color("Skipping", fg="blue"), [stuff["href"] for stuff in entry["links"]]))
 					continue
 
 				for url in urls:

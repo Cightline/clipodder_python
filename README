@@ -24,7 +24,7 @@
 	delete the oldest 3, and be good to go. 
 
 
-	[NEW] You can now download other media types aswell. 
+	You can now download other media types aswell.
 	Simply add "pdf", "html", etc... to the end of the url
 	
 	Urls need to be named in this type of fashon:
@@ -36,6 +36,10 @@
 	
 	(It just needs to be unique or ConfigParser will 
 	not pick up on it)
+
+
+	[NEW] It will now print to the console in color (if enabled
+	in the config file).
 
 
 	Its best to add this to crontab, maybe sometime early in 
