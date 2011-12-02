@@ -237,7 +237,7 @@ class auto_podder():
 				for letter in list(t_extension):
 					if letter.isalnum():
 						extension += letter
-						print extension
+						
 					else:
 						break	
 				
