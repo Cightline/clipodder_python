@@ -138,9 +138,9 @@ class auto_podder():
 				"magenta": '35;',
 				"cyan": '36;',
 				"white": '37;',
-				None: '',           # This corresponds to no foreground color
-				True: '01;',         # This corresponds to bold foreground
-				False: '',          # This corresponds to not bold foreground
+				None: '',		   # This corresponds to no foreground color
+				True: '01;',		 # This corresponds to bold foreground
+				False: '',		  # This corresponds to not bold foreground
 				}
 
 		# background colors
@@ -153,7 +153,7 @@ class auto_podder():
 				"magenta": '45;',
 				"cyan": '46;',
 				"white": '47;',
-				None: '',           # This corresponds to no background color
+				None: '',		   # This corresponds to no background color
 				}
 
 		# normal text
@@ -174,7 +174,7 @@ class auto_podder():
 	
 	
 	def download_file(self, name, path, url):
-		print("%s [%s]" % (self.color("Downloading", fg="green"), os.path.basename(path)))
+		print("%s [%s]" % (self.color("Downloading", fg="green"), path))
 		
 		with open(path, "wb") as download_file:
 			self.curl.setopt(pycurl.URL, str(url))
@@ -256,11 +256,35 @@ class auto_podder():
 			p_title = os.path.basename(url)
 
 		print "Checking %s" % p_title.encode('utf8')
+		
+		#Check to see if the user wants to download to 
+		#a custom location or use a custom name for the 
+		#download folder
+		
+		for arg in args:
+			if arg.startswith("path="):
+				c_folder_name = args[-1].split("path=")[1]
+				
+				if os.path.basename(c_folder_name) == c_folder_name:
+					p_title = c_folder_name
+			
+				else:
+					download_dir = c_folder_name
+						
+			else:
+				download_dir = self.config_dict["download_dir"]
+				
+				
+			if arg.startswith("name="):
+				p_title = arg.split("name=")[1]
+				
+				
 
-		if self.validate("%s/%s" % (self.config_dict["download_dir"],p_title), True):
+		if self.validate("%s/%s" % (download_dir ,p_title), True):
 			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
 
 				urls = self.get_link(entry, args[1:])
+				
 				
 				#Check to see if anything needs to be downloaded
 				if not urls:
@@ -274,7 +298,7 @@ class auto_podder():
 						continue
 
 					file_name = os.path.basename(url)
-					file_path = "%s/%s/%s" % (self.config_dict["download_dir"], p_title, file_name)
+					file_path = "%s/%s/%s" % (download_dir, p_title, file_name)
 
 					#Check to see if the file exists, if not, download
 					if self.validate(file_path) == False:
