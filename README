@@ -40,7 +40,9 @@
 
 	[NEW] It will now print to the console in color (if enabled
 	in the config file).
-
+	
+	[NEW] You can now add path=/directory/here and name=MyDownloadFolder. 
+	Do not use spaces with name=
 
 	Its best to add this to crontab, maybe sometime early in 
 	the morning before you wake up.
