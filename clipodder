@@ -266,6 +266,8 @@ class auto_podder():
 
 		print "Checking %s" % p_title.encode('utf8')
 		
+		download_dir = self.config_dict["download_dir"]
+		
 		#Check to see if the user wants to download to 
 		#a custom location or use a custom name for the 
 		#download folder
@@ -275,14 +277,11 @@ class auto_podder():
 				c_folder_name = arg.split("path=")[1]
 				
 				if os.path.basename(c_folder_name) == c_folder_name:
-					p_title = c_folder_name
+					download_dir = "%s/%s" % (self.config_dict["download_dir"], c_folder_name)
 			
 				else:
 					download_dir = c_folder_name
 						
-			else:
-				download_dir = self.config_dict["download_dir"]
-				
 				
 			if arg.startswith("name="):
 				p_title = arg.split("name=")[1]
