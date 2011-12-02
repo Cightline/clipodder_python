@@ -263,7 +263,7 @@ class auto_podder():
 		
 		for arg in args:
 			if arg.startswith("path="):
-				c_folder_name = args[-1].split("path=")[1]
+				c_folder_name = arg.split("path=")[1]
 				
 				if os.path.basename(c_folder_name) == c_folder_name:
 					p_title = c_folder_name
