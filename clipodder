@@ -231,10 +231,19 @@ class auto_podder():
 			# get the file extension
 			try:
 				#strip extra stuff that is not needed from the url
-				extension = stuff["href"].split(".")[-1]
-				if len(extension) > 3:
-					extension = stuff["href"].split(".")[-1][0:3]
-					stuff["href"] = stuff["href"][0:stuff["href"].find(extension)+len(extension)]
+				t_extension = stuff["href"].split(".")[-1]
+				extension = ""
+				
+				for letter in list(t_extension):
+					if letter.isalnum():
+						extension += letter
+						print extension
+					else:
+						break	
+				
+				#if len(extension) > 3:
+				#	extension = stuff["href"].split(".")[-1][0:3]
+				#	stuff["href"] = stuff["href"][0:stuff["href"].find(extension)+len(extension)]
 			except:
 				extension = None
 
