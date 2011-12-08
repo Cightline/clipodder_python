@@ -7,7 +7,7 @@
 	
 [deps]
 	python2
-	python-feedparser
+	python-feedparser [5.1] (On ubuntu use "easy_install feedparser", other systems may vary)
 	pycurl (python-pycurl)
 
 [notes]
