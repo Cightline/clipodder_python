@@ -66,6 +66,18 @@ class auto_podder():
 		if not sys.stdout.isatty():
 			self.config_dict["use_colors"] = False
 		self.validate(self.config_dict["download_dir"], True)
+
+		# Print a big warning if downloads_per_url is more than delete_if_more_than.
+		# If downloads_per_url is larger, we will constantly download excess files
+		# and then promptly delete them.
+		if self.config_dict["downloads_per_url"] > self.config_dict["delete_if_more_than"]:
+			warning = "WARNING! In config file "
+			warning += "\"%s\", " % self.config_dict["default_config"]
+			warning += "downloads_per_url is\n"
+			warning += "greater than delete_if_more_than. "
+			warning += "This will cause files to constantly\nget downloaded and then "
+			warning += "subsequently deleted everytime clipodder is run."
+			print("%s" % self.color(warning, bg="red"))
 	
 	def validate(self, path=None, create=False):
 		if path:
