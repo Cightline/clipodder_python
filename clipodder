@@ -156,7 +156,16 @@ class auto_podder():
 		with open(path, "wb") as download_file:
 			self.curl.setopt(pycurl.URL, str(url))
 			self.curl.setopt(pycurl.WRITEDATA, download_file) 
+			self.curl.setopt(pycurl.NOPROGRESS, 0)
+			self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
 			self.curl.perform()
+
+	def curl_progress(self, download_total, downloaded, upload_total, uploaded):
+		"""
+		This function will abort if we get a Ctrl-C.  This
+		enables us to abort in the middle of self.curl.perform().
+		"""
+		pass
 		
 	
 	def get_link(self, data, download_types):
