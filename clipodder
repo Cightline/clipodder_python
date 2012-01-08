@@ -276,7 +276,11 @@ class auto_podder():
 				
 
 		if self.validate("%s/%s" % (download_dir ,p_title), True):
-			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
+			# We want to download entries from oldest to newest so the
+			# files' mtimes are set correctly.
+			entries = data["entries"][0:self.config_dict["downloads_per_url"]]
+			entries.reverse()
+			for entry in entries:
 
 				urls = self.get_link(entry, args[1:])
 				
