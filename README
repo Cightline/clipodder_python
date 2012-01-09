@@ -38,11 +38,57 @@
 	not pick up on it)
 
 
-	[NEW] It will now print to the console in color (if enabled
+	It will now print to the console in color (if enabled
 	in the config file).
-	
+
 	[NEW] You can now add path=/directory/here and name=MyDownloadFolder. 
 	Do not use spaces with name=
 
+	[NEW] Functionality has been added to delete old files.  This
+	can be controlled with the delete_if_more_than option.  This can
+	be applied to the entire config file, as well as individual urls.
+
 	Its best to add this to crontab, maybe sometime early in 
 	the morning before you wake up.
+
+[config explanation]
+
+	[options explanation]
+
+		- download_dir: The directory that the podcasts will be downloaded to.
+		                The podcasts from each URL will go into different directories.
+
+		- downloads_per_url: The number of items from each URL that will be downloaded.
+		                     For instance, if a URL contains 100 items, but
+		                     downloads_per_url is only 40, then only the 40 most recent
+		                     items will be downloaded.
+
+		- use_colors: This determines whether or not colors will be used in the output.
+		              Colors will not be used when not printing to the console, even
+		              if this is "true".
+
+		- delete_if_more_than: The number of items to keep for each URL.  For instance, if
+		                       this is 25, then anything more than 25 items will be
+		                       deleted.  The oldest items are deleted first, based
+		                       on the file's mtime.  If this is "false" or 0, then
+		                       nothing will ever be deleted.
+
+
+	[urls explanation]
+
+		- path: This path will be used like the download_dir in the [options] section.
+		
+		- name: This will be used as the name of the directory that contains the actual
+		        items from the url.  For instance, if you want to download audio
+		        files from a podcast into /some/path/to/TheFolder/, you can use
+		        a url item that looks like this:
+
+		foo = http://www.example.net/feed.xml audio path=/some/path/to name=TheFolder
+
+		- delete_if_more_than: This overrides the value from the options section.
+
+		- other values: "audio", "html", "video", "pdf" and other file types can
+		                be specified in order to only download these file types from
+		                this feed.  This is useful if you only want the mp3 files
+		                from a feed, but don't want any video files that also come
+		                in the feed.

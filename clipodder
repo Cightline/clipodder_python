@@ -50,11 +50,34 @@ class auto_podder():
 		self.config.readfp(open(self.config_dict["default_config"]))
 		self.config_dict["download_dir"] = self.config.get("options", "download_dir")
 		self.config_dict["downloads_per_url"] = self.config.getint("options", "downloads_per_url")
+
+		# delete_if_more_than can only be an int.  if we don't want anything to be deleted,
+		# then this should be set to 0.
+		delete = self.config.get("options", "delete_if_more_than")
+		try:
+			self.config_dict["delete_if_more_than"] = int(delete)
+		except:
+			self.config_dict["delete_if_more_than"] = 0
+		if self.config_dict["delete_if_more_than"] < 0:
+			self.config_dict["delete_if_more_than"] = 0
+
 		self.config_dict["use_colors"] = self.config.getboolean("options", "use_colors")
 		# don't use colors if we are not printing to the console
 		if not sys.stdout.isatty():
 			self.config_dict["use_colors"] = False
 		self.validate(self.config_dict["download_dir"], True)
+
+		# Print a big warning if downloads_per_url is more than delete_if_more_than.
+		# If downloads_per_url is larger, we will constantly download excess files
+		# and then promptly delete them.
+		if self.config_dict["downloads_per_url"] > self.config_dict["delete_if_more_than"]:
+			warning = "WARNING! In config file "
+			warning += "\"%s\", " % self.config_dict["default_config"]
+			warning += "downloads_per_url is\n"
+			warning += "greater than delete_if_more_than. "
+			warning += "This will cause files to constantly\nget downloaded and then "
+			warning += "subsequently deleted everytime clipodder is run."
+			print("%s" % self.color(warning, bg="red"))
 	
 	def validate(self, path=None, create=False):
 		if path:
@@ -149,6 +172,44 @@ class auto_podder():
 		self.curl.setopt(pycurl.MAXREDIRS, 5)
 		self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
 	
+
+	def delete_unneeded(self, download_dir, p_title, delete_if_more_than=0):
+		"""
+		Delete extra files that we don't want to keep.  Deletes oldest files
+		based on the mtime.
+		"""
+		if delete_if_more_than <= 0:
+			return
+
+		all_files = []
+		directory = os.path.normpath("%s/%s") % (download_dir, p_title)
+		for path, _, files in os.walk(directory):
+			for f in files:
+				timestamp = os.path.getmtime(os.path.join(path, f))
+				all_files.append([timestamp, os.path.join(path, f)])
+
+		# we don't delete anything if there are less files than we want to keep
+		if len(all_files) <= delete_if_more_than:
+			return
+
+		# sort all files by timestamps
+		all_files.sort(lambda x, y: int(x[0] * 1000000) - int(y[0] * 1000000))
+
+		files_to_delete = all_files[:-delete_if_more_than]
+
+		# delete oldest ones up to the ones we want to keep
+		for info in files_to_delete:
+			f = info[1]
+			print("%s [%s]" % (self.color("Deleteing", fg="red"), f))
+			try:
+				os.unlink(f)
+			except e:
+				print("%s \"%s\": %s" %
+						(self.color("Could not delete", bg="red"), f, str(e)))
+
+
+
+
 	
 	def download_file(self, name, path, url):
 		print("%s [%s]" % (self.color("Downloading", fg="green"), path))
@@ -156,7 +217,16 @@ class auto_podder():
 		with open(path, "wb") as download_file:
 			self.curl.setopt(pycurl.URL, str(url))
 			self.curl.setopt(pycurl.WRITEDATA, download_file) 
+			self.curl.setopt(pycurl.NOPROGRESS, 0)
+			self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
 			self.curl.perform()
+
+	def curl_progress(self, download_total, downloaded, upload_total, uploaded):
+		"""
+		This function will abort if we get a Ctrl-C.  This
+		enables us to abort in the middle of self.curl.perform().
+		"""
+		pass
 		
 	
 	def get_link(self, data, download_types):
@@ -244,6 +314,8 @@ class auto_podder():
 		print "Checking %s" % p_title.encode('utf8')
 		
 		download_dir = self.config_dict["download_dir"]
+
+		delete_if_more_than = self.config_dict["delete_if_more_than"]
 		
 		#Check to see if the user wants to download to 
 		#a custom location or use a custom name for the 
@@ -263,11 +335,22 @@ class auto_podder():
 				
 			if arg.startswith("name="):
 				p_title = arg.split("name=")[1]
+
+			if arg.startswith("delete_if_more_than="):
+				temp_delete_if_more_than = arg.split("delete_if_more_than=")[1]
+				try:
+					delete_if_more_than = int(temp_delete_if_more_than)
+				except:
+					delete_if_more_than = 0
 				
 				
 
 		if self.validate("%s/%s" % (download_dir ,p_title), True):
-			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
+			# We want to download entries from oldest to newest so the
+			# files' mtimes are set correctly.
+			entries = data["entries"][0:self.config_dict["downloads_per_url"]]
+			entries.reverse()
+			for entry in entries:
 
 				urls = self.get_link(entry, args[1:])
 				
@@ -289,6 +372,9 @@ class auto_podder():
 					#Check to see if the file exists, if not, download
 					if self.validate(file_path) == False:
 						self.download_file(p_title, file_path, url)
+
+
+		self.delete_unneeded(download_dir, p_title, delete_if_more_than)
 
 
 
