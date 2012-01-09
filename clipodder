@@ -81,10 +81,10 @@ class auto_podder():
 		try:
 			if os.path.isdir(self.config_dict["default_config_dir"]) == False:
 				os.mkdir(self.config_dict["default_config_dir"])
-				print "Created default config directory (%s)" % (self.config_dict["default_config_dir"])
+				print "Created config directory (%s)" % (self.config_dict["default_config_dir"])
 		
 		except Exception, e:
-			print "Error creating default config dir (%s)" % (self.config_dict["default_config_dir"])
+			print "Error creating config dir (%s)" % (self.config_dict["default_config_dir"])
 			print "Reason: %s" % e
 			exit(1)
 	
@@ -144,6 +144,7 @@ class auto_podder():
 
 
 	def init_curl(self):
+		"""Setup curl to dowload"""
 		self.curl = pycurl.Curl()
 		self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
 		self.curl.setopt(pycurl.MAXREDIRS, 5)
@@ -151,6 +152,7 @@ class auto_podder():
 	
 	
 	def download_file(self, name, path, url):
+		"""Download the given file from the url, with path as the name"""
 		print("%s [%s]" % (self.color("Downloading", fg="green"), path))
 		
 		with open(path, "wb") as download_file:
@@ -218,9 +220,8 @@ class auto_podder():
 					else:
 						break	
 				
-				#if len(extension) > 3:
-				#	extension = stuff["href"].split(".")[-1][0:3]
-				#	stuff["href"] = stuff["href"][0:stuff["href"].find(extension)+len(extension)]
+			
+
 			except:
 				extension = None
 
@@ -234,6 +235,7 @@ class auto_podder():
 
 
 	def handle_parsed(self, data, url, args):
+		"""This function parses the data, and downloads if needed"""
 
 		if "title" in data["feed"]:
 			p_title = data["feed"]["title"]
@@ -245,10 +247,9 @@ class auto_podder():
 		
 		download_dir = self.config_dict["download_dir"]
 		
-		#Check to see if the user wants to download to 
-		#a custom location or use a custom name for the 
-		#download folder
-		
+		# Check to see if the user wants to download to 
+		# a custom location or use a custom name for the 
+		# download folder
 		for arg in args:
 			if arg.startswith("path="):
 				c_folder_name = arg.split("path=")[1]
@@ -264,32 +265,40 @@ class auto_podder():
 			if arg.startswith("name="):
 				p_title = arg.split("name=")[1]
 				
+		
+		
+	
+		# Iterate through all the entries and download if needed
+		for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
+	       		urls = self.get_link(entry, args[1:])
+		
+                        # Check to see if anything needs to be downloaded
+			if not urls:
+				print("%s %s, nothing found..." % 
+				      (self.color("Skipping", fg="blue"), 
+				       [stuff["href"] for stuff in entry["links"]]))
 				
+				continue
 
-		if self.validate("%s/%s" % (download_dir ,p_title), True):
-			for entry in data["entries"][0:self.config_dict["downloads_per_url"]]:
-
-				urls = self.get_link(entry, args[1:])
-				
-				
-				#Check to see if anything needs to be downloaded
-				if not urls:
-					print("%s %s, nothing found..." % (self.color("Skipping", fg="blue"), [stuff["href"] for stuff in entry["links"]]))
+			for url in urls:
+				# this should never happen?
+				if not url:
+					print("ERROR! url not valid from %s" % p_title)
 					continue
 
-				for url in urls:
-					# this should never happen?
-					if not url:
-						print("ERROR! url not valid from %s" % p_title)
-						continue
-
-					file_name = os.path.basename(url)
-					file_path = os.path.normpath("%s/%s/%s") % (download_dir, p_title, file_name)
-
-					#Check to see if the file exists, if not, download
-					if self.validate(file_path) == False:
-						self.download_file(p_title, file_path, url)
-
+				file_name = os.path.basename(url)
+				file_dl_dir = os.path.normpath("%s/%s") % (download_dir, p_title)
+				file_full_path = "%s/%s" % (file_dl_dir, file_name)
+				
+				# It attempts to check if the file already exists,
+				# if it does not it creates the directory path
+				# and downloads  
+				if self.validate(file_full_path, create=False) == True:
+					print "Already exists (%s)" % (file_full_path)
+					
+				else:
+					self.validate(file_dl_dir, create=True)
+					self.download_file(p_title, file_full_path, url)
 
 
 
