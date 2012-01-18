@@ -1,7 +1,7 @@
 [description]
-	I wrote clipodder to be a alternative to bashpodder, and gpo.
+	Clipodder was written to be a alternative to bashpodder, and gpo.
 	Bashpodder tends to download too much extra "stuff" along with the podcast
-	which is quite annoying. Gpo (from gpodder) has too many deps, 
+	which is annoying. Gpo (from gpodder) has too many deps, 
 	and uses a sql database backend.
 	
 	
