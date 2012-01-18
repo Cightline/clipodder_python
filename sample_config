@@ -1,7 +1,12 @@
 [options]
 download_dir = /home/stealth/.clipodder/downloads
+
+#Downloads the first N videos from the urls below
 downloads_per_url = 2
+
 use_colors = false
+
+#Delete videos if more than specified number, set to false to disable. 
 delete_if_more_than = 4
 
 
