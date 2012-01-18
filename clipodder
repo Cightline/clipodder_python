@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #	Clipodder, a small "cron-able" utility to download video/audio podcasts
 #	
@@ -56,15 +56,20 @@ class auto_podder():
 		delete = self.config.get("options", "delete_if_more_than")
 		try:
 			self.config_dict["delete_if_more_than"] = int(delete)
-		except:
-			self.config_dict["delete_if_more_than"] = 0
+		except Exception, e:
+			print("ERROR, %s" % e)
+			exit(1)
+			
+			
 		if self.config_dict["delete_if_more_than"] < 0:
 			self.config_dict["delete_if_more_than"] = 0
 
 		self.config_dict["use_colors"] = self.config.getboolean("options", "use_colors")
+		
 		# don't use colors if we are not printing to the console
 		if not sys.stdout.isatty():
 			self.config_dict["use_colors"] = False
+		
 		self.validate(self.config_dict["download_dir"], True)
 
 		# Print a big warning if downloads_per_url is more than delete_if_more_than.
