@@ -24,7 +24,7 @@ import ConfigParser
 import json
 
 import pycurl
-import feedparser
+from feedparser import parse
 
 
 class auto_podder():
@@ -392,9 +392,11 @@ class auto_podder():
 			exit()
 		
 		elif url:
-			self.handle_parsed(feedparser.parse(url), url, args)
+			self.handle_parsed(parse(url), url, args)
 		
 	
 	
-	
-clipodder = auto_podder()
+if os.getuid() != 0:
+	clipodder = auto_podder()
+else:
+	print "Do not run me as root"
