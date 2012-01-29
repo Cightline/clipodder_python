@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #	Clipodder, a small "cron-able" utility to download video/audio podcasts
 #	
@@ -109,7 +109,8 @@ class auto_podder():
 		try:
 			if os.path.isdir(self.config_dict["default_config_dir"]) == False:
 				os.mkdir(self.config_dict["default_config_dir"])
-				print "Created default config directory (%s)" % (self.config_dict["default_config_dir"])
+				print "Created default config directory (%s)" % (
+					self.config_dict["default_config_dir"])
 		
 		except Exception, e:
 			print "Error creating default config dir (%s)" % (self.config_dict["default_config_dir"])
@@ -293,17 +294,18 @@ class auto_podder():
 					else:
 						break	
 				
-				#if len(extension) > 3:
-				#	extension = stuff["href"].split(".")[-1][0:3]
-				#	stuff["href"] = stuff["href"][0:stuff["href"].find(extension)+len(extension)]
+			
 			except:
 				extension = None
 
 			# add it if the mime type matches, or the extension matches
-			if type_f in mime_types or extension in file_types:
+			
+			# This should help against accidental download of "shadow"
+			# because "shadow" does not have a extension, unless the 
+			# user purposefully sets it to "shadow".
+			if type_f != None and type_f in mime_types or extension != None and extension in file_types:
 				links.append(stuff["href"])
 				
-			
 
 		return links
 
