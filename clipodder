@@ -53,17 +53,16 @@ class auto_podder():
 
 		# delete_if_more_than can only be an int.  if we don't want anything to be deleted,
 		# then this should be set to 0.
-		delete = self.config.get("options", "delete_if_more_than")
+		
 		try:
-			self.config_dict["delete_if_more_than"] = int(delete)
-		except Exception, e:
-			print("ERROR, %s" % e)
-			exit(1)
+			self.config_dict["delete_if_more_than"] = self.config.getint("options", "delete_if_more_than")
 			
-			
-		if self.config_dict["delete_if_more_than"] < 0:
-			self.config_dict["delete_if_more_than"] = 0
+			if self.config_dict["delete_if_more_than"] < 0:
+				self.config_dict["delete_if_more_than"] = 0
 
+		except ValueError:
+			self.config_dict["delete_if_more_than"] = 0
+					
 		self.config_dict["use_colors"] = self.config.getboolean("options", "use_colors")
 		
 		# don't use colors if we are not printing to the console
@@ -75,7 +74,11 @@ class auto_podder():
 		# Print a big warning if downloads_per_url is more than delete_if_more_than.
 		# If downloads_per_url is larger, we will constantly download excess files
 		# and then promptly delete them.
-		if self.config_dict["downloads_per_url"] > self.config_dict["delete_if_more_than"]:
+		
+		if self.config_dict["delete_if_more_than"] == 0:
+			pass
+		
+		elif self.config_dict["downloads_per_url"] > self.config_dict["delete_if_more_than"]:
 			warning = "WARNING! In config file "
 			warning += "\"%s\", " % self.config_dict["default_config"]
 			warning += "downloads_per_url is\n"
@@ -220,12 +223,23 @@ class auto_podder():
 	def download_file(self, name, path, url):
 		print("%s [%s]" % (self.color("Downloading", fg="green"), path))
 		
-		with open(path, "wb") as download_file:
-			self.curl.setopt(pycurl.URL, str(url))
-			self.curl.setopt(pycurl.WRITEDATA, download_file) 
-			self.curl.setopt(pycurl.NOPROGRESS, 0)
-			self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
-			self.curl.perform()
+
+		# This should fix the problem with folders 
+		# getting created then nothing being added. 
+		# We are "really" downloading at this part,
+		# so we can validate here. 
+		download_dir = os.path.dirname(path)
+		
+		if self.validate(download_dir, True):
+			
+			with open(path, "wb") as download_file:
+				self.curl.setopt(pycurl.URL, str(url))
+				self.curl.setopt(pycurl.WRITEDATA, download_file) 
+				self.curl.setopt(pycurl.NOPROGRESS, 0)
+				self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
+				self.curl.perform()
+		else:
+			print "WARNING! I could not create the directory: %s" % (download_dir)
 
 	def curl_progress(self, download_total, downloaded, upload_total, uploaded):
 		"""
@@ -351,34 +365,42 @@ class auto_podder():
 					delete_if_more_than = 0
 				
 				
+		# I think this is what is creating folders
+		# when nothing is downloaded. 
+		# So I will move it to self.download_file()
+		#if self.validate("%s/%s" % (download_dir ,p_title), True):
+		
+		# We want to download entries from oldest to newest so the
+                #files' mtimes are set correctly.
 
-		if self.validate("%s/%s" % (download_dir ,p_title), True):
-			# We want to download entries from oldest to newest so the
-			# files' mtimes are set correctly.
-			entries = data["entries"][0:self.config_dict["downloads_per_url"]]
-			entries.reverse()
-			for entry in entries:
+		entries = data["entries"][0:self.config_dict["downloads_per_url"]]
+		entries.reverse()
+		for entry in entries:
 
-				urls = self.get_link(entry, args[1:])
-				
-				
-				#Check to see if anything needs to be downloaded
-				if not urls:
-					print("%s %s, nothing found..." % (self.color("Skipping", fg="blue"), [stuff["href"] for stuff in entry["links"]]))
+			urls = self.get_link(entry, args[1:])
+			
+			
+			#Check to see if anything needs to be downloaded
+			if not urls:
+				# This looks a little confusing, but it shortens
+				# the length of the line. 
+				print("%s %s, nothing found..." 
+				      % (self.color("Skipping", fg="blue"),  
+					 [stuff["href"] for stuff in entry["links"]]))
+				continue
+			
+			for url in urls:
+				# this should never happen?
+				if not url:
+					print("ERROR! url not valid from %s" % p_title)
 					continue
-
-				for url in urls:
-					# this should never happen?
-					if not url:
-						print("ERROR! url not valid from %s" % p_title)
-						continue
-
-					file_name = os.path.basename(url)
-					file_path = os.path.normpath("%s/%s/%s") % (download_dir, p_title, file_name)
-
-					#Check to see if the file exists, if not, download
-					if self.validate(file_path) == False:
-						self.download_file(p_title, file_path, url)
+				
+				file_name = os.path.basename(url)
+				file_path = os.path.normpath("%s/%s/%s") % (download_dir, p_title, file_name)
+					
+				#Check to see if the file exists, if not, download
+				if self.validate(file_path) == False:
+					self.download_file(p_title, file_path, url)
 
 
 		self.delete_unneeded(download_dir, p_title, delete_if_more_than)
