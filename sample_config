@@ -10,7 +10,7 @@ use_colors = false
 delete_if_more_than = 4
 
 
-#the name of the url (not the url itself) needs to be something unique, ie a number = 
+#the name of the url (not the url itself) needs to be something unique, numbers work. 
 [urls]
 #1 = http://revision3.com/diggnation/feed/quicktime-high-definition/
 #2 = http://feeds.twit.tv/sn_video_large
