@@ -12,6 +12,9 @@ delete_if_more_than = 4
 # Show progress meter
 show_progress = False
 
+# Show the full path
+show_full_paths = False
+
 # Size (in bytes) that we want to read per iteration
 buffer_size = 1024
 

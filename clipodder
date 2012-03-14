@@ -35,6 +35,8 @@ class auto_podder():
 		self.config = ConfigParser.ConfigParser()
 		self.buffer_size = 1024
 		self.show_progress = False
+		self.spacer = "       "
+		self.show_full_paths = False
 
 		if self.validate():
 			self.load_conf()
@@ -93,6 +95,7 @@ class auto_podder():
 		
 		self.show_progress = bool(self.try_config("options", "show_progress", self.show_progress))
 		
+		self.show_full_paths = bool(self.try_config("options", "show_full_paths", self.show_full_paths))
 
 	
 	def try_config(self, c_section, c_value, value):
@@ -228,7 +231,8 @@ class auto_podder():
 		# delete oldest ones up to the ones we want to keep
 		for info in files_to_delete:
 			f = info[1]
-			print("%s [%s]" % (self.color("Deleteing", fg="red"), f))
+			self.message("%s%s [%s]" % (self.spacer, self.color("Deleteing", fg="red"), 
+					   	   		 			 self.path_name(f)), True)
 			try:
 				os.unlink(f)
 			except e:
@@ -243,6 +247,13 @@ class auto_podder():
 		else:
 			sys.stdout.write("%s" % (message))
 
+	def path_name(self, path):
+	    if self.show_full_paths:
+	       return path
+	    else:
+		return os.path.basename(path)				
+
+	
 	
 	def print_progress(self, current, total):
 		# If anybody knows how to make this look better, have at it, I'll be 
@@ -263,7 +274,9 @@ class auto_podder():
 
 
 	def download_file(self, name, path, url):
-		self.message("        %s [%s]" % (self.color("Downloading", fg="green"), os.path.basename(path)))
+		self.message("%s%s [%s]" % (self.spacer, 
+				   	   self.color("Downloading", fg="green"),
+					   self.path_name(path)))
 		
 
 		# This should fix the problem with folders 
