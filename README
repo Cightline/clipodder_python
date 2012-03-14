@@ -72,6 +72,11 @@
 		                       deleted.  The oldest items are deleted first, based
 		                       on the file's mtime.  If this is "false" or 0, then
 		                       nothing will ever be deleted.
+		
+		- show_progress: Set this to True, to enable the progress meter. 
+
+		- buffer_size:   The amount (in bytes) that it will read per iteration. 
+				 Defaults to 1024, experiment with it if you want. 
 
 
 	[urls explanation]
