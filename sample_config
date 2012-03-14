@@ -1,14 +1,19 @@
 [options]
 download_dir = /home/stealth/.clipodder/downloads
 
-#Downloads the first N videos from the urls below
+# Downloads the first N videos from the urls below
 downloads_per_url = 2
 
-use_colors = false
+use_colors = False
 
-#Delete videos if more than specified number, set to false to disable. 
+# Delete videos if more than specified number, set to false to disable
 delete_if_more_than = 4
 
+# Show progress meter
+show_progress = False
+
+# Size (in bytes) that we want to read per iteration
+buffer_size = 1024
 
 #the name of the url (not the url itself) needs to be something unique, numbers work. 
 [urls]
@@ -16,6 +21,6 @@ delete_if_more_than = 4
 #2 = http://feeds.twit.tv/sn_video_large
 2 = http://nana-life.com/nana-life.xml audio html
 3 = http://revision3.com/hak5/feed/MP4-High-Definition video
-4 = http://feeds.feedburner.com/tedtalksHD delete_if_more_than=200
+4 = http://feeds.feedburner.com/tedtalksHD delete_if_more_than=10
 5 = http://www.tbsradio.jp/bakusho/rss.xml audio delete_if_more_than=false
 
