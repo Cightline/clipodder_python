@@ -77,6 +77,9 @@
 		- buffer_size:   The amount (in bytes) that it will read per iteration. 
 				 Defaults to 1024, experiment with it if you want. 
 
+		- show_full_paths: Show the full path of the file that is being deleted, or downloaded. 
+				   Defaults to False. 
+
 
 	[urls explanation]
 
