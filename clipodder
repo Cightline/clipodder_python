@@ -25,7 +25,6 @@ import json
 
 from feedparser import parse
 
-
 class auto_podder():
 	
 	def __init__(self):
@@ -33,10 +32,12 @@ class auto_podder():
 		self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
 		self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
 		self.config = ConfigParser.ConfigParser()
-		self.buffer_size = 1024
-		self.show_progress = False
+		
+		self.config_dict["buffer_size"] = 1024
+		self.config_dict["show_progress"] = False
+		self.config_dict["show_full_paths"] = True
+
 		self.spacer = "       "
-		self.show_full_paths = False
 
 		if self.validate():
 			self.load_conf()
@@ -87,15 +88,27 @@ class auto_podder():
 			warning += "greater than delete_if_more_than. "
 			warning += "This will cause files to constantly\nget downloaded and then "
 			warning += "subsequently deleted everytime clipodder is run."
-			print("%s" % self.color(warning, bg="red"))
+			self.message("%s" % self.color(warning, bg="red"), True)
 			
+			# Easier for the user to read
+			self.message("\n",True)
+			
+			
+
+
 		# Added self.try_config, so if they forget, or don't add some option, it won't shit a brick. 
 		
-		self.buffer_size = int(self.try_config("options", "buffer_size", self.buffer_size))
+		self.config_dict["buffer_size"] = int(self.try_config("options", 
+						  		      "buffer_size", 
+								      self.config_dict["buffer_size"]))
 		
-		self.show_progress = bool(self.try_config("options", "show_progress", self.show_progress))
+		self.config_dict["show_progress"] = bool(self.try_config("options", 
+						    		         "show_progress", 
+									 self.config_dict["show_progress"]))
 		
-		self.show_full_paths = bool(self.try_config("options", "show_full_paths", self.show_full_paths))
+		self.config_dict["show_full_paths"] = bool(self.try_config("options", 
+						      		           "show_full_paths", 
+									   self.config_dict["show_full_paths"]))
 
 	
 	def try_config(self, c_section, c_value, value):
@@ -248,8 +261,9 @@ class auto_podder():
 			sys.stdout.write("%s" % (message))
 
 	def path_name(self, path):
-	    if self.show_full_paths:
+	    if self.config_dict["show_full_paths"]:
 	       return path
+	    
 	    else:
 		return os.path.basename(path)				
 
@@ -259,7 +273,7 @@ class auto_podder():
 		# If anybody knows how to make this look better, have at it, I'll be 
 		# happy to merge
 
-		p_pct = "%s" % int(float(current-self.buffer_size)/float(total) * 100)
+		p_pct = "%s" % int(float(current-self.config_dict["buffer_size"])/float(total) * 100)
 		pct =   "%s" % int(float(current)/float(total) * 100)
 
 
@@ -303,19 +317,22 @@ class auto_podder():
 					
 						# Incase chunk is going to try to read 
 						# past the total bytes. 
-						if current_b + self.buffer_size > total_b:
-							chunk = page.read(total_b - current_b)
-							current_b += (total_b - current_b)
+						if (current_b + self.config_dict["buffer_size"]) > total_b:
+						   	# Calculate the difference 
+							d = total_b - current_b
+							chunk = page.read(d)
+							current_b += (d)
 							finished = True
+
 						else:
-							chunk = page.read(self.buffer_size)
-							current_b += self.buffer_size
+							chunk = page.read(self.config_dict["buffer_size"])
+							current_b += self.config_dict["buffer_size"]
 
 						if chunk:
 							download_file.write(chunk)
 							
 							
-						if self.show_progress:
+						if self.config_dict["show_progress"]:
 							self.print_progress(current_b, total_b)
 
 						if finished or not chunk:
