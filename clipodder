@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 #	Clipodder, a small "cron-able" utility to download video/audio podcasts
 #	
