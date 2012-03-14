@@ -8,7 +8,6 @@
 [deps]
 	python2
 	python-feedparser [5.1] (On ubuntu use "easy_install feedparser", other systems may vary)
-	pycurl (python-pycurl)
 
 [notes]
 	The config will be initially created the first time you run
