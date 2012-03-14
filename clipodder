@@ -19,11 +19,10 @@
 
 import os
 import sys
-import urllib2
+import urllib
 import ConfigParser
 import json
 
-import pycurl
 from feedparser import parse
 
 
@@ -34,10 +33,11 @@ class auto_podder():
 		self.config_dict["default_config_dir"] = os.path.expanduser("~/.clipodder")
 		self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
 		self.config = ConfigParser.ConfigParser()
-	
+		self.buffer_size = 1024
+		self.show_progress = False
+
 		if self.validate():
 			self.load_conf()
-			self.init_curl()
 			for item in self.config.items("urls"):
 				#Split it up, so we can specify more arguments. 
 				feed_args = str(item[1]).split(" ")
@@ -86,7 +86,33 @@ class auto_podder():
 			warning += "This will cause files to constantly\nget downloaded and then "
 			warning += "subsequently deleted everytime clipodder is run."
 			print("%s" % self.color(warning, bg="red"))
+			
+		# Added self.try_config, so if they forget, or don't add some option, it won't shit a brick. 
+		
+		self.buffer_size = int(self.try_config("options", "buffer_size", self.buffer_size))
+		
+		self.show_progress = bool(self.try_config("options", "show_progress", self.show_progress))
+		
+
 	
+	def try_config(self, c_section, c_value, value):
+		""" Trys to load a value from the config, *if it can*
+		it will return the new value, otherwise it will return 
+		the given value (value)"""
+
+		try:
+			return self.config.get(c_section, c_value)
+		
+		except:
+			print "Could not determine [%s] from section [%s], defaulting to %s" % (c_value, 
+												c_section, 
+												value)
+
+			# Give the value back, because we could not retrieve the new one. 
+			return value
+
+
+
 	def validate(self, path=None, create=False):
 		if path:
 			if os.path.exists(path):
@@ -175,13 +201,6 @@ class auto_podder():
 		return "%sm%s%s" % (color_escape_seq, string, reset_seq)
 
 
-	def init_curl(self):
-		self.curl = pycurl.Curl()
-		self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
-		self.curl.setopt(pycurl.MAXREDIRS, 5)
-		self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
-	
-
 	def delete_unneeded(self, download_dir, p_title, delete_if_more_than=0):
 		"""
 		Delete extra files that we don't want to keep.  Deletes oldest files
@@ -217,11 +236,34 @@ class auto_podder():
 						(self.color("Could not delete", bg="red"), f, str(e)))
 
 
-
+	def message(self, message, newline=False):
+		if newline:
+			sys.stdout.write("%s\n" % (message))
+		
+		else:
+			sys.stdout.write("%s" % (message))
 
 	
+	def print_progress(self, current, total):
+		# If anybody knows how to make this look better, have at it, I'll be 
+		# happy to merge
+
+		p_pct = "%s" % int(float(current-self.buffer_size)/float(total) * 100)
+		pct =   "%s" % int(float(current)/float(total) * 100)
+
+
+		
+		if current:
+			# Erase the previous percent
+			self.message("\b" * (len(list(p_pct))+1))
+			self.message("\r[%% %s]" % (pct))
+		
+		else:
+			self.message("\r[%% %s]" % (pct))
+
+
 	def download_file(self, name, path, url):
-		print("%s [%s]" % (self.color("Downloading", fg="green"), path))
+		self.message("        %s [%s]" % (self.color("Downloading", fg="green"), os.path.basename(path)))
 		
 
 		# This should fix the problem with folders 
@@ -232,23 +274,52 @@ class auto_podder():
 		
 		if self.validate(download_dir, True):
 			
+			try:
+				page = urllib.urlopen(url)
+				total_b = int(page.info()["Content-Length"])
+
+			except Exception (e):
+				print "Could not download %s, reason: %s" % (url, e)
+
 			with open(path, "wb") as download_file:
-				self.curl.setopt(pycurl.URL, str(url))
-				self.curl.setopt(pycurl.WRITEDATA, download_file) 
-				self.curl.setopt(pycurl.NOPROGRESS, 0)
-				self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
-				self.curl.perform()
+				current_b = 0
+				finished = False			  
+				
+				while (1):
+					if current_b <= total_b:
+					
+						# Incase chunk is going to try to read 
+						# past the total bytes. 
+						if current_b + self.buffer_size > total_b:
+							chunk = page.read(total_b - current_b)
+							current_b += (total_b - current_b)
+							finished = True
+						else:
+							chunk = page.read(self.buffer_size)
+							current_b += self.buffer_size
+
+						if chunk:
+							download_file.write(chunk)
+							
+							
+						if self.show_progress:
+							self.print_progress(current_b, total_b)
+
+						if finished or not chunk:
+							break
+						
+							
+													
+					
+				# Start a newline
+				self.message("",True)
+
+
+
 		else:
 			print "WARNING! I could not create the directory: %s" % (download_dir)
 
-	def curl_progress(self, download_total, downloaded, upload_total, uploaded):
-		"""
-		This function will abort if we get a Ctrl-C.  This
-		enables us to abort in the middle of self.curl.perform().
-		"""
-		pass
 		
-	
 	def get_link(self, data, download_types):
 		"""
 		This gets the downloadable links from an entry in an RSS feed.
@@ -271,8 +342,9 @@ class auto_podder():
 		file_types = []
 
 		# (these probably need to be expanded...)
-		video_extensions = ["avi", "flv", "mov", "mp4"]
-		audio_extensions = ["mp3", "ogg", "wav", "m4a"]
+		# Yes I added a Windows format, I have nothing against the end user. 
+		video_extensions = ["avi", "flv", "mov", "mp4", "wmv"]
+		audio_extensions = ["mp3", "ogg", "wav", "m4a", "aac", "wma"]
 
 		if download_types == []:
 			mime_types = ["video", "audio"]
