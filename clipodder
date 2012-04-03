@@ -303,12 +303,12 @@ class auto_podder():
 			
 			try:
 				page = urllib.urlopen(url)
-				total_b = int(page.info()["Content-Length"])
+				total_b = page.info()["Content-Length"]
 
 			except Exception (e):
 				print "Could not download %s, reason: %s" % (url, e)
 
-			with open(path, "wb") as download_file:
+			with open("%s.part" % (path), "wb") as download_file:
 				current_b = 0
 				finished = False			  
 				
@@ -317,7 +317,7 @@ class auto_podder():
 					
 					# Incase chunk is going to try to read 
 					# past the total bytes. 
-					if (current_b + self.config_dict["buffer_size"]) > total_b:
+					if total_b <= (current_b + self.config_dict["buffer_size"]):
 						# Calculate the difference 
 						d = total_b - current_b
 						chunk = page.read(d)
@@ -340,7 +340,8 @@ class auto_podder():
 						
 							
 													
-					
+				os.rename("%s.part" % (path), path)
+
 				# Start a newline
 				self.message("",True)
 
