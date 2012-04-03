@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #	Clipodder, a small "cron-able" utility to download video/audio podcasts
 #	
@@ -90,7 +90,7 @@ class auto_podder():
 			warning += "subsequently deleted everytime clipodder is run."
 			self.message("%s" % self.color(warning, bg="red"), True)
 			
-			# Easier for the user to read
+			# Add some space so its easier for the user to read.
 			self.message("\n",True)
 			
 			
@@ -312,31 +312,31 @@ class auto_podder():
 				current_b = 0
 				finished = False			  
 				
-				while (1):
-					if current_b <= total_b:
+				while current_b < total_b:
 					
-						# Incase chunk is going to try to read 
-						# past the total bytes. 
-						if (current_b + self.config_dict["buffer_size"]) > total_b:
-						   	# Calculate the difference 
-							d = total_b - current_b
-							chunk = page.read(d)
-							current_b += (d)
-							finished = True
+					
+					# Incase chunk is going to try to read 
+					# past the total bytes. 
+					if (current_b + self.config_dict["buffer_size"]) > total_b:
+						# Calculate the difference 
+						d = total_b - current_b
+						chunk = page.read(d)
+						current_b += (d)
+						finished = True
 
-						else:
-							chunk = page.read(self.config_dict["buffer_size"])
-							current_b += self.config_dict["buffer_size"]
-
-						if chunk:
-							download_file.write(chunk)
+					else:
+						chunk = page.read(self.config_dict["buffer_size"])
+						current_b += self.config_dict["buffer_size"]
+						
+					if chunk:
+						download_file.write(chunk)
 							
 							
-						if self.config_dict["show_progress"]:
-							self.print_progress(current_b, total_b)
+					if self.config_dict["show_progress"]:
+						self.print_progress(current_b, total_b)
 
-						if finished or not chunk:
-							break
+					if finished or not chunk:
+						break
 						
 							
 													
