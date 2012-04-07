@@ -19,7 +19,7 @@
 
 import os
 import sys
-import urllib
+import urllib2
 import ConfigParser
 import json
 
@@ -37,7 +37,7 @@ class auto_podder():
 		self.config_dict["show_progress"] = False
 		self.config_dict["show_full_paths"] = True
 
-		self.spacer = "       "
+		self.spacer = "         "
 
 		if self.validate():
 			self.load_conf()
@@ -118,7 +118,7 @@ class auto_podder():
 
 		try:
 			return self.config.get(c_section, c_value)
-		
+
 		except:
 			print "Could not determine [%s] from section [%s], defaulting to %s" % (c_value, 
 												c_section, 
@@ -302,35 +302,42 @@ class auto_podder():
 		if self.validate(download_dir, True):
 			
 			try:
-				page = urllib.urlopen(url)
-				total_b = page.info()["Content-Length"]
+				page = urllib2.urlopen(url)
+				total_b = float(page.info()["Content-Length"])
 
 			except Exception (e):
 				print "Could not download %s, reason: %s" % (url, e)
 
 			with open("%s.part" % (path), "wb") as download_file:
-				current_b = 0
+				current_b = 0.0
 				finished = False			  
 				
-				while current_b < total_b:
-					
+
+				# Changed from "while current_b < total_b:" because 
+				# the content-length is not always correct. It kept 
+				# stopping at 99% 
+				while True:
 					
 					# Incase chunk is going to try to read 
 					# past the total bytes. 
-					if total_b <= (current_b + self.config_dict["buffer_size"]):
+					if total_b < (current_b + self.config_dict["buffer_size"]):
 						# Calculate the difference 
 						d = total_b - current_b
-						chunk = page.read(d)
-						current_b += (d)
+						chunk = page.read(int(d))
+						current_b += d
 						finished = True
+						
 
 					else:
 						chunk = page.read(self.config_dict["buffer_size"])
-						current_b += self.config_dict["buffer_size"]
+						current_b += float(self.config_dict["buffer_size"])
 						
 					if chunk:
 						download_file.write(chunk)
-							
+						
+						if len(chunk) != self.config_dict["buffer_size"]:
+							finished = True
+						
 							
 					if self.config_dict["show_progress"]:
 						self.print_progress(current_b, total_b)
@@ -338,7 +345,7 @@ class auto_podder():
 					if finished or not chunk:
 						break
 						
-							
+					
 													
 				os.rename("%s.part" % (path), path)
 
