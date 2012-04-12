@@ -8,6 +8,11 @@
 [deps]
 	python2
 	python-feedparser [5.1] (On ubuntu use "easy_install feedparser", other systems may vary)
+	
+	pycurl 
+	       (I have re-added pycurl. I attempted to code up a file downloader in Python, but I kept
+	       having trouble with it stopping at %99. I don't have enough time at the moment to code up a fully
+	       working version, maybe later.)
 
 [notes]
 	The config will be initially created the first time you run
@@ -22,7 +27,7 @@
 	have 3, 4, 5, etc... videos. If you have 5 downloaded you can 
 	delete the oldest 3, and be good to go. 
 
-
+	
 	You can now download other media types aswell.
 	Simply add "pdf", "html", etc... to the end of the url
 	
@@ -40,10 +45,10 @@
 	It will now print to the console in color (if enabled
 	in the config file).
 
-	[NEW] You can now add path=/directory/here and name=MyDownloadFolder. 
+	You can now add path=/directory/here and name=MyDownloadFolder. 
 	Do not use spaces with name=
 
-	[NEW] Functionality has been added to delete old files.  This
+	Functionality has been added to delete old files.  This
 	can be controlled with the delete_if_more_than option.  This can
 	be applied to the entire config file, as well as individual urls.
 
@@ -73,9 +78,6 @@
 		                       nothing will ever be deleted.
 		
 		- show_progress: Set this to True, to enable the progress meter. 
-
-		- buffer_size:   The amount (in bytes) that it will read per iteration. 
-				 Defaults to 1024, experiment with it if you want. 
 
 		- show_full_paths: Show the full path of the file that is being deleted, or downloaded. 
 				   Defaults to False. 
