@@ -22,6 +22,8 @@ import sys
 import urllib2
 import ConfigParser
 import json
+import urllib
+import pycurl
 
 from feedparser import parse
 
@@ -33,14 +35,18 @@ class auto_podder():
 		self.config_dict["default_config"] = "%s/%s" % (self.config_dict["default_config_dir"], "config")
 		self.config = ConfigParser.ConfigParser()
 		
-		self.config_dict["buffer_size"] = 1024
 		self.config_dict["show_progress"] = False
 		self.config_dict["show_full_paths"] = True
 
-		self.spacer = "         "
+		self.curl = None
+
+		self.spacer = "        "
+		
+		
 
 		if self.validate():
 			self.load_conf()
+			self.init_curl()
 			for item in self.config.items("urls"):
 				#Split it up, so we can specify more arguments. 
 				feed_args = str(item[1]).split(" ")
@@ -48,6 +54,11 @@ class auto_podder():
 				
 				self.deal_with_url(feed_url, feed_args)
 	
+		
+		
+	def debug_msg(self, msg):
+		if self.debug:
+			print "\n\n %s \n\n" % (msg)
 	
 	def load_conf(self):
 		self.config.readfp(open(self.config_dict["default_config"]))
@@ -96,11 +107,7 @@ class auto_podder():
 			
 
 
-		# Added self.try_config, so if they forget, or don't add some option, it won't shit a brick. 
-		
-		self.config_dict["buffer_size"] = int(self.try_config("options", 
-						  		      "buffer_size", 
-								      self.config_dict["buffer_size"]))
+		# Added self.try_config, so if they forget, or don't add some option, it won't shit a brick. ~
 		
 		self.config_dict["show_progress"] = bool(self.try_config("options", 
 						    		         "show_progress", 
@@ -110,7 +117,7 @@ class auto_podder():
 						      		           "show_full_paths", 
 									   self.config_dict["show_full_paths"]))
 
-	
+			
 	def try_config(self, c_section, c_value, value):
 		""" Trys to load a value from the config, *if it can*
 		it will return the new value, otherwise it will return 
@@ -270,27 +277,51 @@ class auto_podder():
 	
 	
 	def print_progress(self, current, total):
-		# If anybody knows how to make this look better, have at it, I'll be 
-		# happy to merge
-
-		p_pct = "%s" % int(float(current-self.config_dict["buffer_size"])/float(total) * 100)
-		pct =   "%s" % int(float(current)/float(total) * 100)
 
 
 		
-		if current:
-			# Erase the previous percent
-			self.message("\b" * (len(list(p_pct))+1))
-			self.message("\r[%% %s]" % (pct))
+		if total != 0.0:
+			
+			pct = int(current/total * 100)
+
+			p_bar = "[ %s] " % int(current/total * 100)
+			
+			if len(str(pct)) == 1:
+				p_bar = "[%%   %s] " % pct
+
+			elif len(str(pct)) == 2:
+				p_bar = "[%%  %s] " % pct
+
+			elif len(str(pct)) == 3:
+				p_bar = "[%% %s] " % pct
+
+			print "  ",
+			print "\b" * len(p_bar),
+			print "\r",
+
+			print p_bar
+			
+
 		
-		else:
-			self.message("\r[%% %s]" % (pct))
+	def init_curl(self):
+		self.curl = pycurl.Curl()
+		self.curl.setopt(pycurl.FOLLOWLOCATION, 1)
+		self.curl.setopt(pycurl.MAXREDIRS, 5)
+		self.curl.setopt(pycurl.CONNECTTIMEOUT, 10)
+			
 
-
+	def curl_progress(self, download_total, downloaded, upload_total, uploaded):
+		"""
+		This function will abort if we get a Ctrl-C. This
+		enables us to abort in the middle of self.curl.perform().
+		"""
+		if self.config_dict["show_progress"]:
+			self.print_progress(downloaded, download_total)
+		
 	def download_file(self, name, path, url):
 		self.message("%s%s [%s]" % (self.spacer, 
 				   	   self.color("Downloading", fg="green"),
-					   self.path_name(path)))
+					   self.path_name(path)), True)
 		
 
 		# This should fix the problem with folders 
@@ -301,58 +332,14 @@ class auto_podder():
 		
 		if self.validate(download_dir, True):
 			
-			try:
-				page = urllib2.urlopen(url)
-				total_b = float(page.info()["Content-Length"])
+			with open("%s.part" % path, "wb") as download_file:
+				self.curl.setopt(pycurl.URL, str(url))
+				self.curl.setopt(pycurl.WRITEDATA, download_file)
+				self.curl.setopt(pycurl.NOPROGRESS, 0)
+				self.curl.setopt(pycurl.PROGRESSFUNCTION, self.curl_progress)
+				self.curl.perform()	
 
-			except Exception (e):
-				print "Could not download %s, reason: %s" % (url, e)
-
-			with open("%s.part" % (path), "wb") as download_file:
-				current_b = 0.0
-				finished = False			  
-				
-
-				# Changed from "while current_b < total_b:" because 
-				# the content-length is not always correct. It kept 
-				# stopping at 99% 
-				while True:
-					
-					# Incase chunk is going to try to read 
-					# past the total bytes. 
-					if total_b < (current_b + self.config_dict["buffer_size"]):
-						# Calculate the difference 
-						d = total_b - current_b
-						chunk = page.read(int(d))
-						current_b += d
-						finished = True
-						
-
-					else:
-						chunk = page.read(self.config_dict["buffer_size"])
-						current_b += float(self.config_dict["buffer_size"])
-						
-					if chunk:
-						download_file.write(chunk)
-						
-						if len(chunk) != self.config_dict["buffer_size"]:
-							finished = True
-						
-							
-					if self.config_dict["show_progress"]:
-						self.print_progress(current_b, total_b)
-
-					if finished or not chunk:
-						break
-						
-					
-													
-				os.rename("%s.part" % (path), path)
-
-				# Start a newline
-				self.message("",True)
-
-
+			os.rename("%s.part" % path, path)
 
 		else:
 			print "WARNING! I could not create the directory: %s" % (download_dir)
