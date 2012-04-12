@@ -109,21 +109,26 @@ class auto_podder():
 
 		# Added self.try_config, so if they forget, or don't add some option, it won't shit a brick. ~
 		
-		self.config_dict["show_progress"] = bool(self.try_config("options", 
-						    		         "show_progress", 
-									 self.config_dict["show_progress"]))
+		self.config_dict["show_progress"] = self.try_config("options", 
+								    "show_progress", 
+								    self.config_dict["show_progress"], True)
 		
-		self.config_dict["show_full_paths"] = bool(self.try_config("options", 
-						      		           "show_full_paths", 
-									   self.config_dict["show_full_paths"]))
+		self.config_dict["show_full_paths"] = self.try_config("options", 
+								      "show_full_paths", 
+								      self.config_dict["show_full_paths"], True)
+
+		
 
 			
-	def try_config(self, c_section, c_value, value):
+	def try_config(self, c_section, c_value, value, boolean=False):
 		""" Trys to load a value from the config, *if it can*
 		it will return the new value, otherwise it will return 
 		the given value (value)"""
 
 		try:
+			if boolean:
+				return self.config.getboolean(c_section, c_value)
+			
 			return self.config.get(c_section, c_value)
 
 		except:
@@ -268,11 +273,11 @@ class auto_podder():
 			sys.stdout.write("%s" % (message))
 
 	def path_name(self, path):
-	    if self.config_dict["show_full_paths"]:
+	    if self.config_dict["show_full_paths"] == True:
 	       return path
 	    
-	    else:
-		return os.path.basename(path)				
+	    elif self.config_dict["show_full_paths"] == False:
+		    return os.path.basename(path)				
 
 	
 	
