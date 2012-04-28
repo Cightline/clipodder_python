@@ -1,3 +1,8 @@
+NOTICE: I am currently working on a C++ implementation of clipodder to avoid python2.5/2.6/2.7/3 problems, and to improve my coding.
+(I will still fix issues and accept merges until I get the C++ version out.)
+
+
+
 [description]
 	Clipodder was written to be a alternative to bashpodder, and gpo.
 	Bashpodder tends to download too much extra "stuff" along with the podcast
