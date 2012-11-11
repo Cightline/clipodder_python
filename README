@@ -1,5 +1,4 @@
-NOTICE: I am currently working on a C++ implementation of clipodder to avoid python2.5/2.6/2.7/3 problems, and to improve my coding.
-(I will still fix issues and accept merges until I get the C++ version out.)
+NOTICE: clipodder_cpp is the replacement for this, I'm no longer working on the python version.
 
 
 
